@@ -24,7 +24,7 @@ document.addEventListener('DOMContentLoaded', () => {
         getBalance: (address) => `${API_BASE}/wallets/${address}/balance`,
         getTransactions: (address) => `${API_BASE}/wallets/${address}/transactions`,
         sendTokens: `${API_BASE}/transactions`,
-        faucet: `${API_BASE}/faucet`,
+        faucet: `/faucet`,
         vestingClaimable: (address) => `${API_BASE}/vesting/claimable?address=${address}`,
         vestingClaim: `${API_BASE}/vesting/claim`,
         generateKey: `${API_BASE}/keys/generate`,
