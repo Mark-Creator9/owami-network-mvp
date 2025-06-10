@@ -1,0 +1,8 @@
+CREATE TABLE api_keys (
+    id SERIAL PRIMARY KEY,
+    key VARCHAR(128) UNIQUE NOT NULL,
+    email VARCHAR(255) NOT NULL,
+    permissions JSONB NOT NULL,
+    expires_in INTEGER,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP
+);

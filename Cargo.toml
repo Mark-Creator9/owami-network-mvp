@@ -1,0 +1,55 @@
+[package]
+name = "owami-network"
+version = "0.1.0"
+edition = "2021"
+
+[lib]
+name = "owami_network"
+path = "src/lib.rs"
+
+[features]
+testnet = []
+production = [
+    "sqlx/sqlite",
+    "sqlx/runtime-tokio-native-tls"
+]
+
+[dependencies]
+actix-web = "4.10.2"
+actix-rt = "2.10.0"
+actix-cors = "0.7.1"
+actix-files = "0.6.2"
+serde = { version = "1.0", features = ["derive"] }
+actix-web-httpauth = "0.8.2"
+anyhow = "1.0"
+blake3 = "1.8.1"
+chrono = { version = "0.4", features = ["serde"] }
+dotenv = "0.15"
+ed25519-dalek = "2.1.1"
+env_logger = "0.10"
+tracing = { version = "0.1", optional = true, features = ["log", "std"] }
+tracing-subscriber = { version = "0.3", optional = true }
+hex = "0.4"
+lazy_static = "1.4"
+log = "0.4"
+rand = "0.8"
+rand_core = { version = "0.6", features = ["std"] }
+serde_json = "1.0"
+sqlx = { version = "0.8.1", features = ["sqlite", "postgres", "runtime-tokio-native-tls", "chrono"] }
+tokio = { version = "1.44.2", features = ["full", "sync"] }
+uuid = { version = "1.0", features = ["v4", "serde"] }
+jsonwebtoken = "8.3"
+bcrypt = "0.15.0"
+rayon = "1.7"
+parking_lot = "0.12"
+futures = "0.3"
+
+[[bin]]
+name = "owami-network"
+path = "src/main.rs"
+
+[dev-dependencies]
+criterion = "0.4"
+pretty_assertions = "1.0"
+tokio-test = "0.4"
+rstest = "0.18"
