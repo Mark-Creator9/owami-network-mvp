@@ -36,6 +36,12 @@ async fn main() -> std::io::Result<()> {
         println!("Creating App instance...");
         let batch_processor = web::Data::new(owami_network::api::BatchProcessor::new());
         App::new()
+            .service(
+                Files::new("/", "./landing")
+                    .index_file("index.html")
+                    .prefer_utf8(true)
+                    .show_files_listing()
+            )
             .app_data(web::Data::new(jwt_config.clone()))
             .app_data(web::Data::from(vesting_manager.clone()))
             .wrap(
@@ -58,6 +64,7 @@ async fn main() -> std::io::Result<()> {
                 .prefer_utf8(true))
     })
     .bind(("0.0.0.0", 8080))?
+    .workers(4)
     .run()
     .await;
     Ok(())
