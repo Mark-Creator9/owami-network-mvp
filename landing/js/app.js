@@ -21,12 +21,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const API_BASE = '/api';
     const ENDPOINTS = {
         createWallet: `${API_BASE}/wallets/create`,
-        getBalance: (address) => `${API_BASE}/wallets/${address}/balance`,
-        getTransactions: (address) => `${API_BASE}/wallets/${address}/transactions`,
-        sendTokens: `${API_BASE}/transactions`,
+        getBalance: (address) => `/wallets/${address}/balance`,
+        getTransactions: (address) => `/wallets/${address}/transactions`,
+        sendTokens: `/transactions`,
         faucet: `/faucet`,
-        vestingClaimable: (address) => `${API_BASE}/vesting/claimable?address=${address}`,
-        vestingClaim: `${API_BASE}/vesting/claim`,
+        vestingClaimable: (address) => `/vesting/claimable?address=${address}`,
+        vestingClaim: `/vesting/claim`,
         generateKey: `${API_BASE}/keys/generate`,
     };
 
