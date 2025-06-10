@@ -37,6 +37,13 @@ async fn main() -> std::io::Result<()> {
         let batch_processor = web::Data::new(owami_network::api::BatchProcessor::new());
         App::new()
             .service(
+                web::resource("/").to(|| async {
+                    HttpResponse::Found()
+                        .append_header(("Location", "/index.html"))
+                        .finish()
+                })
+            )
+            .service(
                 Files::new("/", "./landing")
                     .index_file("index.html")
                     .prefer_utf8(true)
