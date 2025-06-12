@@ -20,7 +20,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- API Configuration ---
     const API_BASE = '/api';
     const ENDPOINTS = {
-        createWallet: `${API_BASE}/wallets/create`,
+        createWallet: `/wallets/create`,
         getBalance: (address) => `/wallets/${address}/balance`,
         getTransactions: (address) => `/wallets/${address}/transactions`,
         sendTokens: `/transactions`,
