@@ -1,13 +1,39 @@
 use actix_web::{test, App, web};
 use owami_network::api::{config, BatchProcessor};
+use owami_network::db::DatabasePool;
+use sqlx::postgres::PgPoolOptions;
+use uuid::Uuid;
 
-// Removed deadpool_postgres imports and create_test_pool function as Postgres is no longer used
+async fn create_test_pool() -> DatabasePool {
+    let pool = PgPoolOptions::new()
+        .max_connections(5)
+        .connect("postgres://postgres:owamitest@localhost:5432/owami_network")
+        .await
+        .expect("Failed to create test database pool");
+
+    // Create a test user if it doesn't exist
+    sqlx::query!(
+        "INSERT INTO users (id, username, password_hash, created_at, updated_at)
+         VALUES ($1, $2, $3, NOW(), NOW())
+         ON CONFLICT (id) DO NOTHING",
+        Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap(),
+        "test_user",
+        "test_hash"
+    )
+    .execute(&pool)
+    .await
+    .expect("Failed to create test user");
+
+    pool
+}
 
 #[actix_web::test]
 async fn test_wallet_creation() {
     let batch_processor = web::Data::new(BatchProcessor::new());
+    let db_pool = web::Data::new(create_test_pool().await);
     let app = test::init_service(
         App::new()
+            .app_data(db_pool)
             .configure(|cfg| config(cfg, batch_processor.clone()))
     ).await;
     let req = test::TestRequest::post().uri("/wallets/create").to_request();
@@ -20,8 +46,10 @@ async fn test_wallet_creation() {
 #[actix_web::test]
 async fn test_balance_retrieval() {
     let batch_processor = web::Data::new(BatchProcessor::new());
+    let db_pool = web::Data::new(create_test_pool().await);
     let app = test::init_service(
         App::new()
+            .app_data(db_pool)
             .configure(|cfg| config(cfg, batch_processor.clone()))
     ).await;
 
@@ -44,8 +72,10 @@ async fn test_balance_retrieval() {
 #[actix_web::test]
 async fn test_faucet_request() {
     let batch_processor = web::Data::new(BatchProcessor::new());
+    let db_pool = web::Data::new(create_test_pool().await);
     let app = test::init_service(
         App::new()
+            .app_data(db_pool)
             .configure(|cfg| config(cfg, batch_processor.clone()))
     ).await;
 
@@ -69,8 +99,10 @@ async fn test_faucet_request() {
 #[actix_web::test]
 async fn test_send_transaction() {
     let batch_processor = web::Data::new(BatchProcessor::new());
+    let db_pool = web::Data::new(create_test_pool().await);
     let app = test::init_service(
         App::new()
+            .app_data(db_pool)
             .configure(|cfg| config(cfg, batch_processor.clone()))
     ).await;
 
@@ -94,7 +126,7 @@ async fn test_send_transaction() {
 
     // Send transaction
     let tx_req = test::TestRequest::post()
-        .uri("/transactions/send")
+        .uri("/transactions")
         .set_json(&serde_json::json!({
             "from": wallet1["address"],
             "to": wallet2["address"],
@@ -103,17 +135,19 @@ async fn test_send_transaction() {
         .to_request();
     let tx_resp = test::call_service(&app, tx_req).await;
     let tx_body: serde_json::Value = test::read_body_json(tx_resp).await;
-    if !tx_body["status"].as_str().unwrap_or("").to_lowercase().contains("success") {
+    if !tx_body["status"].as_str().unwrap_or("").to_lowercase().contains("queued") {
         println!("Error response: {}", tx_body);
     }
-    assert!(tx_body["status"].as_str().unwrap_or("").to_lowercase().contains("success"));
+    assert!(tx_body["status"].as_str().unwrap_or("").to_lowercase().contains("queued"));
 }
 
 #[actix_web::test]
 async fn test_transaction_history() {
     let batch_processor = web::Data::new(BatchProcessor::new());
+    let db_pool = web::Data::new(create_test_pool().await);
     let app = test::init_service(
         App::new()
+            .app_data(db_pool)
             .configure(|cfg| config(cfg, batch_processor.clone()))
     ).await;
 

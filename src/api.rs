@@ -1,8 +1,8 @@
-use actix_web::{post, get, web, HttpResponse};
-use actix_web::web::ServiceConfig;
+use actix_web::{post, get, web, HttpResponse, web::ServiceConfig};
 use crate::wallet::Wallet;
 use crate::vesting::VestingManager;
 use crate::auth::key_manager::ApiKeyManager;
+use crate::db::DatabasePool;
 use serde::{Serialize, Deserialize};
 use std::sync::Mutex;
 use std::time::{SystemTime, UNIX_EPOCH};
@@ -10,6 +10,8 @@ use tokio::sync::mpsc;
 use std::sync::Arc;
 use std::collections::VecDeque;
 use tokio::time::{interval, Duration};
+use uuid::Uuid;
+use sqlx::query;
 
 const TRANSACTION_BATCH_SIZE: usize = 50;
 const BATCH_INTERVAL_MS: u64 = 100;
@@ -83,13 +85,32 @@ impl BatchProcessor {
     }
 }
 
+
 #[post("/wallets/create")]
-async fn create_wallet() -> HttpResponse {
+async fn create_wallet(db_pool: web::Data<DatabasePool>) -> HttpResponse {
+    // Create new wallet
     let wallet = Wallet::new();
     let address = wallet.address().to_string();
     let private_key = wallet.private_key().unwrap().to_string();
 
-    // Removed database insert, just return wallet info
+    // For demonstration, associate wallet with a dummy user_id
+    // TODO: Replace with actual authenticated user_id
+    let user_id = Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap();
+
+    // Insert wallet into database
+    let result = query!(
+        "INSERT INTO wallets (id, user_id, balance, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW())",
+        Uuid::new_v4(),
+        user_id,
+        0_i64
+    )
+    .execute(db_pool.as_ref())
+    .await;
+
+    if let Err(e) = result {
+        eprintln!("Failed to insert wallet: {}", e);
+        return HttpResponse::InternalServerError().finish();
+    }
 
     HttpResponse::Ok().json(WalletResponse {
         address,

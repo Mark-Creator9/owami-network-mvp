@@ -2,6 +2,7 @@ pub mod api;
 pub mod auth;
 pub mod blockchain;
 pub mod block;
+pub mod db;
 pub mod models;
 pub mod testnet;
 pub mod transaction;

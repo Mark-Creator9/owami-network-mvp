@@ -1,6 +1,7 @@
 use actix_cors::Cors;
 use std::sync::Mutex;
 use owami_network::vesting::VestingManager;
+use owami_network::db::create_pool;
 use actix_files::Files;
 use actix_web::{web, App, HttpServer, HttpResponse, Responder};
 use owami_network::auth::create_jwt_config;
@@ -29,25 +30,31 @@ async fn main() -> std::io::Result<()> {
     // Initialize VestingManager
     let vesting_manager = std::sync::Arc::new(Mutex::new(VestingManager::default()));
 
+    // Initialize Postgres pool
+    let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| "postgres://postgres:owamitest@localhost:5432/owami-network".to_string());
+    let db_pool = create_pool(&database_url).await.expect("Failed to create database pool");
+
     log::info!("Starting Owami Network server");
 
     println!("Creating HttpServer...");
     let _server = HttpServer::new(move || {
         println!("Creating App instance...");
         let batch_processor = web::Data::new(owami_network::api::BatchProcessor::new());
+        let db_pool_data = web::Data::new(db_pool.clone());
         App::new()
-            .service(
-                web::resource("/").to(|| async {
-                    HttpResponse::Found()
-                        .append_header(("Location", "/index.html"))
-                        .finish()
-                })
-            )
+            .app_data(db_pool_data)
             .service(
                 Files::new("/", "./landing")
                     .index_file("index.html")
                     .prefer_utf8(true)
                     .show_files_listing()
+            )
+            .service(
+                web::resource("/").to(|| async {
+                    actix_web::HttpResponse::Ok()
+                        .content_type("text/html")
+                        .body(include_str!("../landing/index.html"))
+                })
             )
             .app_data(web::Data::new(jwt_config.clone()))
             .app_data(web::Data::from(vesting_manager.clone()))

@@ -1,16 +1,12 @@
-use std::sync::Arc;
-use sqlx::{Pool, Sqlite};
-use sqlx::sqlite::SqlitePoolOptions;
+use sqlx::{Pool, Postgres};
+use sqlx::postgres::PgPoolOptions;
 
-#[derive(Clone)]
-pub enum DatabasePool {
-    Sqlite(Arc<Pool<Sqlite>>),
-}
+pub type DatabasePool = Pool<Postgres>;
 
-pub async fn create_pool() -> Result<DatabasePool, Box<dyn std::error::Error>> {
-    // Always create a Sqlite pool for local development and testing
-    let pool = SqlitePoolOptions::new()
-        .connect("sqlite::memory:")
+pub async fn create_pool(database_url: &str) -> Result<DatabasePool, Box<dyn std::error::Error>> {
+    let pool = PgPoolOptions::new()
+        .max_connections(5)
+        .connect(database_url)
         .await?;
-    Ok(DatabasePool::Sqlite(Arc::new(pool)))
+    Ok(pool)
 }
