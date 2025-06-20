@@ -11,7 +11,7 @@ use std::sync::Arc;
 use std::collections::VecDeque;
 use tokio::time::{interval, Duration};
 use uuid::Uuid;
-use sqlx::query;
+use sqlx::{query, postgres::PgPool};
 
 const TRANSACTION_BATCH_SIZE: usize = 50;
 const BATCH_INTERVAL_MS: u64 = 100;
