@@ -1,0 +1,22 @@
+{
+  "db": "PostgreSQL",
+  "2e3fb3d02c975b6a7444bc3bae308630650eff384bd1351ba99225fd8e6604e7": {
+    "describe": {
+      "columns": [
+        {
+          "name": "id",
+          "ordinal": 0,
+          "type_info": "Uuid"
+        }
+      ],
+      "nullable": [false],
+      "parameters": {
+        "Left": [
+          "Uuid",
+          "Int8"
+        ]
+      }
+    },
+    "query": "INSERT INTO wallets (id, user_id, balance, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW())"
+  }
+}
