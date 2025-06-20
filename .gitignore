@@ -1,1 +1,21 @@
-target/
+# Environment files
+.env
+.env.local
+.env.production
+
+# Build artifacts
+/target/
+Cargo.lock
+
+# IDE and editor files
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Database files
+*.db
+*.sqlite
+
+# Logs
+*.log

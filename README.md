@@ -134,6 +134,45 @@ To run the test scripts:
 
 These scripts will test the API endpoints and provide output for the various test cases.
 
+## Deployment on Render
+
+### Prerequisites
+1. A Render account
+2. PostgreSQL database instance on Render
+
+### Setting up PostgreSQL on Render
+1. Create a new PostgreSQL database in your Render dashboard
+2. Note down the following connection details:
+   - Internal Database URL
+   - External Database URL
+   - User
+   - Password
+   - Host
+   - Port
+   - Database name
+
+### Deploying the Application
+1. Create a new Web Service in Render
+2. Connect your repository
+3. Choose "Docker" as the environment
+4. Set the following environment variables:
+   - `POSTGRES_USER`: Database user from Render PostgreSQL
+   - `POSTGRES_PASSWORD`: Database password
+   - `POSTGRES_HOST`: Database host
+   - `POSTGRES_PORT`: Database port (usually 5432)
+   - `POSTGRES_DATABASE`: Database name
+   - `JWT_SECRET`: Your secure JWT secret
+   - `RUST_LOG`: Set to "info" for production logging
+   - `PORT`: Set to 8000
+
+### Post-Deployment
+1. The application will automatically:
+   - Install required dependencies
+   - Run database migrations
+   - Build and start the Rust application
+2. Monitor the deployment logs to ensure successful startup
+3. Your API will be available at your Render service URL
+
 ## Development Roadmap
 
 - **Current:** MVP Testnet with core blockchain, USSD integration.
