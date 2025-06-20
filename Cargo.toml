@@ -35,7 +35,7 @@ log = "0.4"
 rand = "0.8"
 rand_core = { version = "0.6", features = ["std"] }
 serde_json = "1.0"
-sqlx = { version = "0.8.1", features = ["sqlite", "postgres", "runtime-tokio-native-tls", "chrono", "uuid", "offline"], default-features = false }
+sqlx = { version = "0.8.1", features = ["postgres", "runtime-tokio-native-tls", "tls-native-tls", "chrono", "uuid", "json"], default-features = false }
 tokio = { version = "1.44.2", features = ["full", "sync"] }
 uuid = { version = "1.0", features = ["v4", "serde"] }
 jsonwebtoken = "8.3"
