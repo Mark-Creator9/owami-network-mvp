@@ -77,7 +77,7 @@ async fn main() -> std::io::Result<()> {
                 .index_file("landing/index.html")
                 .prefer_utf8(true))
     })
-    .bind(("0.0.0.0", 8080))?
+    .bind(("0.0.0.0", 8081))?
     .workers(4)
     .run()
     .await;

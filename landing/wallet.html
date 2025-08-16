@@ -17,6 +17,7 @@
             </div>
             <nav class="main-nav">
                 <a href="index.html">Home</a>
+                <a href="dapp.html">DApps</a>
                 <a href="api-docs.html" target="_blank">API Docs</a>
             </nav>
             <div class="header-actions">
@@ -25,11 +26,30 @@
                     <span>Testnet Live</span>
                 </div>
                 <button id="theme-toggle" class="theme-btn"><i class="fas fa-moon"></i></button>
+                <button id="mobile-menu-toggle" class="mobile-menu-btn">
+                    <i class="fas fa-bars"></i>
+                </button>
             </div>
         </div>
     </header>
 
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="mobile-menu">
+        <div class="mobile-menu-content">
+            <a href="index.html">Home</a>
+            <a href="dapp.html">DApps</a>
+            <a href="api-docs.html" target="_blank">API Docs</a>
+        </div>
+    </div>
+
     <main>
+        <section class="hero">
+            <div class="container hero-content">
+                <h1 class="hero-title">Owami Testnet Wallet</h1>
+                <p class="hero-subtitle">Manage your OWA tokens, deploy smart contracts, and interact with the Owami Network</p>
+            </div>
+        </section>
+
         <section id="wallet-section" class="container wallet-section-container">
             <div class="wallet-grid">
                 <div class="wallet-card card">
@@ -95,8 +115,17 @@
     <footer class="app-footer">
         <div class="container">
             <div class="footer-content">
-                <img src="../marketing/crypto_portions_logo_alt.svg" alt="Owami Network Icon" class="footer-logo">
-                <p>&copy; 2025 Owami Network. All Rights Reserved.</p>
+                <div class="footer-logo-container">
+                    <img src="../marketing/crypto_portions_logo_alt.svg" alt="Owami Network Icon" class="footer-logo">
+                </div>
+                <div class="footer-info">
+                    <p>&copy; 2025 Owami Network. All Rights Reserved.</p>
+                    <div class="footer-links">
+                        <a href="https://github.com/owami-network" target="_blank"><i class="fab fa-github"></i></a>
+                        <a href="https://twitter.com/owami-network" target="_blank"><i class="fab fa-twitter"></i></a>
+                        <a href="mailto:contact@owaminetwork.com"><i class="fas fa-envelope"></i></a>
+                    </div>
+                </div>
             </div>
         </div>
     </footer>

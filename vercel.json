@@ -1,0 +1,12 @@
+{
+  "builds": [
+    {
+      "src": "Cargo.toml",
+      "use": "@vercel/rust"
+    }
+  ],
+  "env": {
+    "DATABASE_URL": "@database_url",
+    "JWT_SECRET": "@jwt_secret"
+  }
+}

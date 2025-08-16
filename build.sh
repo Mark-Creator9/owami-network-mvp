@@ -5,7 +5,7 @@ echo "Installing PostgreSQL client..."
 apt-get update && apt-get install -y postgresql-client
 
 echo "Waiting for PostgreSQL to be ready..."
-until PGPASSWORD=wIVb8cOrk2f8yGLxWBWRvgpBn9xsihhT psql -h dpg-d18a6th5pdvs73ca2gb0-a.oregon-postgres.render.com -U owami_network_db_user -d owami_network_db -c '\q'; do
+until PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" -c '\q'; do
   echo "PostgreSQL is unavailable - sleeping"
   sleep 1
 done
@@ -14,13 +14,13 @@ echo "PostgreSQL is up - executing migrations"
 
 # Initialize extensions first
 echo "Initializing database extensions..."
-PGPASSWORD=wIVb8cOrk2f8yGLxWBWRvgpBn9xsihhT psql -h dpg-d18a6th5pdvs73ca2gb0-a.oregon-postgres.render.com -U owami_network_db_user -d owami_network_db -f migrations/20250404000000_init_extensions.sql
+PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" -f migrations/20250404000000_init_extensions.sql
 
 # Run other migrations
 for migration in migrations/*.sql; do
     if [[ $migration != *"init_extensions.sql" ]]; then
         echo "Applying migration: $migration"
-        PGPASSWORD=wIVb8cOrk2f8yGLxWBWRvgpBn9xsihhT psql -h dpg-d18a6th5pdvs73ca2gb0-a.oregon-postgres.render.com -U owami_network_db_user -d owami_network_db -f "$migration"
+        PGPASSWORD="$DB_PASSWORD" psql -h "$DB_HOST" -U "$DB_USER" -d "$DB_NAME" -f "$migration"
     fi
 done
 

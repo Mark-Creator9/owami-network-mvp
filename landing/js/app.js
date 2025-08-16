@@ -2,6 +2,8 @@ document.addEventListener('DOMContentLoaded', () => {
     // --- DOM Elements ---
     const elements = {
         themeToggle: document.getElementById('theme-toggle'),
+        mobileMenuToggle: document.getElementById('mobile-menu-toggle'),
+        mobileMenu: document.getElementById('mobile-menu'),
         createWalletBtn: document.getElementById('create-wallet'),
         exportWalletBtn: document.getElementById('export-wallet'),
         sendTokensBtn: document.getElementById('send-tokens'),
@@ -169,6 +171,14 @@ document.addEventListener('DOMContentLoaded', () => {
         elements.themeToggle.innerHTML = `<i class="fas ${document.body.classList.contains('dark-mode') ? 'fa-sun' : 'fa-moon'}"></i>`;
     };
 
+    const toggleMobileMenu = () => {
+        elements.mobileMenu.style.display = elements.mobileMenu.style.display === 'block' ? 'none' : 'block';
+    };
+
+    const closeMobileMenu = () => {
+        elements.mobileMenu.style.display = 'none';
+    };
+
     const generateApiKey = async () => {
         if (!wallet) {
             alert('Please create a wallet first to associate with your API key.');
@@ -201,6 +211,26 @@ document.addEventListener('DOMContentLoaded', () => {
             }
             elements.themeToggle.addEventListener('click', toggleTheme);
         }
+
+        // --- Mobile Menu ---
+        if (elements.mobileMenuToggle) {
+            elements.mobileMenuToggle.addEventListener('click', toggleMobileMenu);
+        }
+
+        // Close mobile menu when clicking on links
+        const mobileMenuLinks = document.querySelectorAll('#mobile-menu a');
+        mobileMenuLinks.forEach(link => {
+            link.addEventListener('click', closeMobileMenu);
+        });
+
+        // Close mobile menu when clicking outside
+        document.addEventListener('click', (event) => {
+            if (elements.mobileMenu && elements.mobileMenu.style.display === 'block' && 
+                !elements.mobileMenu.contains(event.target) && 
+                !elements.mobileMenuToggle.contains(event.target)) {
+                closeMobileMenu();
+            }
+        });
 
         // --- Wallet Page Specific Logic ---
         // We can detect if we are on the wallet page by checking for a key element.

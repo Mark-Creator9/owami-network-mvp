@@ -91,6 +91,53 @@ GET /wallets/{address}/transactions
 ]
 ```
 
+### Deploy Smart Contract
+Deploys a smart contract to the network.
+
+```http
+POST /dapp/deploy
+Content-Type: application/json
+```
+
+**Request Body**
+```json
+{
+    "contract_path": "path/to/contract.sol",
+    "network": "testnet"
+}
+```
+
+**Response**
+```json
+{
+    "contract_address": "0x1234567890abcdef1234567890abcdef12345678"
+}
+```
+
+### Call Smart Contract Function
+Calls a function on a deployed smart contract.
+
+```http
+POST /dapp/call
+Content-Type: application/json
+```
+
+**Request Body**
+```json
+{
+    "contract_address": "0x1234567890abcdef1234567890abcdef12345678",
+    "function_name": "transfer",
+    "params": {
+        "to": "0xabcdef1234567890abcdef1234567890abcdef12",
+        "amount": 100
+    },
+    "network": "testnet"
+}
+```
+
+**Response**
+The response will contain the result of the function call.
+
 ## Error Responses
 
 ### Database Connection Error
@@ -116,6 +163,12 @@ curl -X POST http://localhost:8080/api/faucet -H "Content-Type: application/json
 
 # Get transaction history
 curl http://localhost:8080/api/wallets/0x123/transactions
+
+# Deploy a smart contract
+curl -X POST http://localhost:8080/api/dapp/deploy -H "Content-Type: application/json" -d '{"contract_path":"path/to/contract.sol","network":"testnet"}'
+
+# Call a smart contract function
+curl -X POST http://localhost:8080/api/dapp/call -H "Content-Type: application/json" -d '{"contract_address":"0x1234567890abcdef1234567890abcdef12345678","function_name":"transfer","params":{"to":"0xabcdef1234567890abcdef1234567890abcdef12","amount":100},"network":"testnet"}'
 ```
 # Owami Network API Documentation
 

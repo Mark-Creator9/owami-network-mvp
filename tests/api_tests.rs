@@ -12,14 +12,14 @@ async fn create_test_pool() -> DatabasePool {
         .expect("Failed to create test database pool");
 
     // Create a test user if it doesn't exist
-    sqlx::query!(
+    sqlx::query(
         "INSERT INTO users (id, username, password_hash, created_at, updated_at)
          VALUES ($1, $2, $3, NOW(), NOW())
-         ON CONFLICT (id) DO NOTHING",
-        Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap(),
-        "test_user",
-        "test_hash"
+         ON CONFLICT (id) DO NOTHING"
     )
+    .bind(Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap())
+    .bind("test_user")
+    .bind("test_hash")
     .execute(&pool)
     .await
     .expect("Failed to create test user");

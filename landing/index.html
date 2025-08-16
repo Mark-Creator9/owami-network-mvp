@@ -19,6 +19,8 @@
                 <a href="#features">Features</a>
                 <a href="#use-cases">Use Cases</a>
                 <a href="#developer-portal">Developers</a>
+                <a href="wallet.html">Wallet</a>
+                <a href="dapp.html">DApps</a>
                 <a href="api-docs.html" target="_blank">API Docs</a>
             </nav>
             <div class="header-actions">
@@ -27,9 +29,24 @@
                     <span>Testnet Live</span>
                 </div>
                 <button id="theme-toggle" class="theme-btn"><i class="fas fa-moon"></i></button>
+                <button id="mobile-menu-toggle" class="mobile-menu-btn">
+                    <i class="fas fa-bars"></i>
+                </button>
             </div>
         </div>
     </header>
+
+    <!-- Mobile Menu -->
+    <div id="mobile-menu" class="mobile-menu">
+        <div class="mobile-menu-content">
+            <a href="#features">Features</a>
+            <a href="#use-cases">Use Cases</a>
+            <a href="#developer-portal">Developers</a>
+            <a href="wallet.html">Wallet</a>
+            <a href="dapp.html">DApps</a>
+            <a href="api-docs.html" target="_blank">API Docs</a>
+        </div>
+    </div>
 
     <main>
         <section class="hero">
@@ -43,23 +60,28 @@
             </div>
         </section>
 
-
         <section id="features" class="features-section">
             <div class="container">
                 <h2 class="section-title">A Platform for Progress</h2>
                 <div class="features-grid">
-                    <div class="feature-item">
-                        <i class="fas fa-shield-alt"></i>
+                    <div class="feature-card card">
+                        <div class="feature-icon">
+                            <i class="fas fa-shield-alt"></i>
+                        </div>
                         <h3>Institutional Grade</h3>
                         <p>Robust security and compliance features for financial institutions and government agencies.</p>
                     </div>
-                    <div class="feature-item">
-                        <i class="fas fa-bolt"></i>
+                    <div class="feature-card card">
+                        <div class="feature-icon">
+                            <i class="fas fa-bolt"></i>
+                        </div>
                         <h3>High Performance</h3>
                         <p>Scalable and efficient, capable of handling high-volume transactions with low fees.</p>
                     </div>
-                    <div class="feature-item">
-                        <i class="fas fa-users-cog"></i>
+                    <div class="feature-card card">
+                        <div class="feature-icon">
+                            <i class="fas fa-users-cog"></i>
+                        </div>
                         <h3>Developer Centric</h3>
                         <p>Comprehensive tools, clear documentation, and a supportive ecosystem for builders.</p>
                     </div>
@@ -71,15 +93,15 @@
             <div class="container">
                 <h2 class="section-title">Powering the Digital Economy</h2>
                 <div class="use-case-grid">
-                    <div class="use-case-item">
+                    <div class="use-case-card card">
                         <h4>Central Bank Digital Currencies (CBDCs)</h4>
                         <p>Providing a secure sandbox for governments to explore and test digital currency initiatives.</p>
                     </div>
-                    <div class="use-case-item">
+                    <div class="use-case-card card">
                         <h4>Cross-Border Payments</h4>
                         <p>Facilitating faster, cheaper, and more transparent international transactions.</p>
                     </div>
-                    <div class="use-case-item">
+                    <div class="use-case-card card">
                         <h4>Supply Chain Management</h4>
                         <p>Enhancing transparency and traceability for goods and services across the continent.</p>
                     </div>
@@ -90,8 +112,11 @@
         <section id="developer-portal" class="developer-portal-section">
             <div class="container">
                 <h2 class="section-title">Ready to Build on Owami?</h2>
-                <p>Access our comprehensive API documentation, tutorials, and community channels to start your journey.</p>
-                <a href="api-docs.html" class="btn btn-primary" target="_blank"><i class="fas fa-book-open"></i> Explore the Docs</a>
+                <p class="section-subtitle">Access our comprehensive API documentation, tutorials, and community channels to start your journey.</p>
+                <div class="developer-actions">
+                    <a href="api-docs.html" class="btn btn-primary" target="_blank"><i class="fas fa-book-open"></i> Explore the Docs</a>
+                    <a href="dapp.html" class="btn btn-secondary"><i class="fas fa-file-contract"></i> Deploy DApps</a>
+                </div>
             </div>
         </section>
     </main>
@@ -99,18 +124,22 @@
     <footer class="app-footer">
         <div class="container">
             <div class="footer-content">
-                <img src="../marketing/crypto_portions_logo_alt.svg" alt="Owami Network Icon" class="footer-logo">
-                <p>&copy; 2025 Owami Network. All Rights Reserved.</p>
-                <div class="footer-links">
-                    <a href="https://github.com/owami-network" target="_blank"><i class="fab fa-github"></i></a>
-                    <a href="https://twitter.com/owami-network" target="_blank"><i class="fab fa-twitter"></i></a>
-                    <a href="mailto:contact@owaminetwork.com"><i class="fas fa-envelope"></i></a>
+                <div class="footer-logo-container">
+                    <img src="../marketing/crypto_portions_logo_alt.svg" alt="Owami Network Icon" class="footer-logo">
+                </div>
+                <div class="footer-info">
+                    <p>&copy; 2025 Owami Network. All Rights Reserved.</p>
+                    <div class="footer-links">
+                        <a href="https://github.com/owami-network" target="_blank"><i class="fab fa-github"></i></a>
+                        <a href="https://twitter.com/owami-network" target="_blank"><i class="fab fa-twitter"></i></a>
+                        <a href="mailto:contact@owaminetwork.com"><i class="fas fa-envelope"></i></a>
+                    </div>
                 </div>
             </div>
         </div>
     </footer>
 
     <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+    <script src="js/app.js" defer></script>
 </body>
 </html>
-<script src="js/app.js" defer></script>

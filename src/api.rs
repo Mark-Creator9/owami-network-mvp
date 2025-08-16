@@ -11,10 +11,12 @@ use std::sync::Arc;
 use std::collections::VecDeque;
 use tokio::time::{interval, Duration};
 use uuid::Uuid;
-use sqlx::{query, postgres::PgPool};
+// use sqlx::{query, postgres::PgPool};
 
 const TRANSACTION_BATCH_SIZE: usize = 50;
 const BATCH_INTERVAL_MS: u64 = 100;
+
+mod dapp;
 
 #[derive(Serialize, Deserialize, Clone)]
 struct WalletResponse {
@@ -98,12 +100,12 @@ async fn create_wallet(db_pool: web::Data<DatabasePool>) -> HttpResponse {
     let user_id = Uuid::parse_str("00000000-0000-0000-0000-000000000000").unwrap();
 
     // Insert wallet into database
-    let result = query!(
-        "INSERT INTO wallets (id, user_id, balance, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW())",
-        Uuid::new_v4(),
-        user_id,
-        0_i64
+    let result = sqlx::query(
+        "INSERT INTO wallets (id, user_id, balance, created_at, updated_at) VALUES ($1, $2, $3, NOW(), NOW())"
     )
+    .bind(Uuid::new_v4())
+    .bind(user_id)
+    .bind(0_i64)
     .execute(db_pool.as_ref())
     .await;
 
@@ -215,5 +217,6 @@ pub fn config(cfg: &mut ServiceConfig, batch_processor: web::Data<BatchProcessor
         .service(transactions)
         .service(get_claimable)
         .service(claim_vested)
-        .service(generate_api_key);
+        .service(generate_api_key)
+        .configure(dapp::config);
 }
