@@ -5,28 +5,28 @@ edition = "2021"
 
 [dependencies]
 # Core blockchain
-ed25519-dalek = "2.1"
+ed25519-dalek = { version = "2.1", default-features = false, features = ["rand_core"] }
 blake3 = "1.5"
 rand = "0.8"
 hex = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-chrono = { version = "0.4", features = ["serde"] }
+chrono = { version = "0.4", features = ["serde"], default-features = false }
 
 # Web server
 axum = "0.7"
-tokio = { version = "1.0", features = ["full"] }
+tokio = { version = "1.0", features = ["rt-multi-thread", "macros", "net"] }
 tower = "0.4"
 tower-http = { version = "0.5", features = ["cors", "fs"] }
 
 # Database
-sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "sqlite", "uuid", "chrono"] }
-uuid = { version = "1.0", features = ["v4", "serde"] }
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "sqlite", "chrono"] }
 
 # Logging
 tracing = "0.1"
-tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt"] }
 anyhow = "1.0"
+uuid = { version = "1.0", features = ["v4"] }
 
 # WASM (disabled temporarily for MVP)
 # wasmtime = "20.0"
@@ -36,6 +36,8 @@ anyhow = "1.0"
 tokio-test = "0.4"
 
 [profile.release]
-opt-level = 3
+opt-level = "s"
 lto = true
 codegen-units = 1
+panic = "abort"
+strip = true

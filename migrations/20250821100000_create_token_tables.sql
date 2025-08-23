@@ -24,10 +24,11 @@ CREATE TABLE IF NOT EXISTS token_approvals (
 
 -- Create dapps table
 CREATE TABLE IF NOT EXISTS dapps (
-    id SERIAL PRIMARY KEY,
+    id UUID PRIMARY KEY,
     name VARCHAR(255) NOT NULL,
-    address VARCHAR(42) NOT NULL,
-    owner VARCHAR(42) NOT NULL,
+    description TEXT,
+    contract_address VARCHAR(42) NOT NULL,
+    creator_id UUID NOT NULL,
     created_at TIMESTAMPTZ DEFAULT NOW()
 );
 
@@ -45,5 +46,5 @@ CREATE TABLE IF NOT EXISTS dapp_states (
 CREATE INDEX IF NOT EXISTS idx_token_transactions_from ON token_transactions(from_address);
 CREATE INDEX IF NOT EXISTS idx_token_transactions_to ON token_transactions(to_address);
 CREATE INDEX IF NOT EXISTS idx_token_transactions_timestamp ON token_transactions(timestamp DESC);
-CREATE INDEX IF NOT EXISTS idx_dapps_owner ON dapps(owner);
-CREATE INDEX IF NOT EXISTS idx_dapps_address ON dapps(address);
+CREATE INDEX IF NOT EXISTS idx_dapps_creator ON dapps(creator_id);
+CREATE INDEX IF NOT EXISTS idx_dapps_address ON dapps(contract_address);

@@ -1,82 +1,1510 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>OWami Network - Simplified Testnet</title>
-    <link rel="stylesheet" href="css/style.css">
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Owami Network | Blockchain for Africa's Digital Economy</title>
+  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/style.css" />
+  <style>
+    :root {
+      --primary: #5e35b1;
+      --primary-light: #7e5dff;
+      --primary-dark: #4527a0;
+      --secondary: #1e88e5;
+      --secondary-light: #42a5f5;
+      --success: #43a047;
+      --success-light: #66bb6a;
+      --warning: #ffb300;
+      --warning-light: #ffca28;
+      --danger: #e53935;
+      --danger-light: #ef5350;
+      --dark: #1e1e2d;
+      --light: #f5f5fa;
+      --gray: #e0e0e0;
+      --text: #2d2d3a;
+      --text-light: #6b6b7b;
+      --dark-bg: #121212;
+      --dark-text: #f5f5f5;
+      --dark-card: #1e1e1e;
+      --gradient-1: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      --gradient-2: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+      --gradient-3: linear-gradient(135deg, #4facfe 0%, #00f2fe 100%);
+      --gradient-4: linear-gradient(135deg, #43e97b 0%, #38f9d7 100%);
+      --shadow-sm: 0 2px 4px rgba(0,0,0,0.1);
+      --shadow-md: 0 4px 12px rgba(0,0,0,0.15);
+      --shadow-lg: 0 8px 24px rgba(0,0,0,0.2);
+      --shadow-xl: 0 16px 48px rgba(0,0,0,0.25);
+      --border-radius: 12px;
+      --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    @media (prefers-color-scheme: dark) {
+      body {
+        background-color: var(--dark-bg);
+        color: var(--dark-text);
+      }
+
+      .wallet-section::before {
+        background: linear-gradient(135deg, rgba(94,53,177,0.1) 0%, rgba(30,136,229,0.1) 100%);
+      }
+
+      .wallet-card {
+        background: rgba(30, 30, 30, 0.8);
+        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
+        border: 1px solid rgba(255, 255, 255, 0.1);
+      }
+
+      .wallet-card:hover {
+        background: rgba(30, 30, 30, 0.9);
+        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
+      }
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Poppins', sans-serif;
+      background-color: var(--light);
+      color: var(--text);
+      line-height: 1.6;
+      overflow-x: hidden;
+      position: relative;
+    }
+
+    /* Animated Background */
+    .animated-bg {
+      position: fixed;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 100%;
+      z-index: -1;
+      opacity: 0.05;
+      background:
+        radial-gradient(circle at 20% 50%, var(--primary-light) 0%, transparent 50%),
+        radial-gradient(circle at 80% 80%, var(--secondary) 0%, transparent 50%),
+        radial-gradient(circle at 40% 20%, var(--success) 0%, transparent 50%);
+      animation: float 20s ease-in-out infinite;
+    }
+
+    @keyframes float {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-20px) rotate(1deg); }
+    }
+
+    /* Scroll animations */
+    .fade-in {
+      opacity: 0;
+      transform: translateY(30px);
+      transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .fade-in.visible {
+      opacity: 1;
+      transform: translateY(0);
+    }
+
+    /* Loading animation */
+    .loading {
+      display: inline-block;
+      width: 20px;
+      height: 20px;
+      border: 3px solid rgba(255,255,255,0.3);
+      border-radius: 50%;
+      border-top-color: white;
+      animation: spin 1s ease-in-out infinite;
+    }
+
+    @keyframes spin {
+      to { transform: rotate(360deg); }
+    }
+
+    /* Pulse animation */
+    .pulse {
+      animation: pulse 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+    }
+
+    @keyframes pulse {
+      0%, 100% { opacity: 1; }
+      50% { opacity: 0.5; }
+    }
+
+    /* Slide animations */
+    .slide-in-left {
+      opacity: 0;
+      transform: translateX(-50px);
+      transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .slide-in-left.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .slide-in-right {
+      opacity: 0;
+      transform: translateX(50px);
+      transition: all 0.8s cubic-bezier(0.4, 0, 0.2, 1);
+    }
+
+    .slide-in-right.visible {
+      opacity: 1;
+      transform: translateX(0);
+    }
+
+    .container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+
+    /* Header */
+    header {
+      background: rgba(255, 255, 255, 0.95);
+      backdrop-filter: blur(10px);
+      box-shadow: 0 2px 20px rgba(0,0,0,0.1);
+      padding: 1rem 0;
+      position: sticky;
+      top: 0;
+      z-index: 100;
+      transition: var(--transition);
+    }
+
+    header.scrolled {
+      box-shadow: 0 4px 30px rgba(0,0,0,0.15);
+      padding: 0.75rem 0;
+    }
+
+    .header-container {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .logo {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      transition: var(--transition);
+    }
+
+    .logo:hover {
+      transform: scale(1.05);
+    }
+
+    .logo-icon {
+      color: var(--primary);
+      font-size: 1.75rem;
+      background: var(--gradient-1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      animation: colorShift 3s ease-in-out infinite;
+    }
+
+    @keyframes colorShift {
+      0%, 100% { filter: hue-rotate(0deg); }
+      50% { filter: hue-rotate(30deg); }
+    }
+
+    .logo-text {
+      font-size: 1.5rem;
+      font-weight: 700;
+      background: var(--gradient-1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+    }
+
+    .status-badge {
+      background: var(--gradient-3);
+      color: white;
+      padding: 0.5rem 1rem;
+      border-radius: 2rem;
+      font-size: 0.85rem;
+      font-weight: 600;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      box-shadow: var(--shadow-md);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .status-badge::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.3), transparent);
+      transition: left 0.5s;
+    }
+
+    .status-badge:hover::before {
+      left: 100%;
+    }
+
+    .status-badge i {
+      font-size: 0.6rem;
+      animation: pulse 2s ease-in-out infinite;
+    }
+
+    /* Hero Section */
+    .hero {
+      background: var(--gradient-1);
+      color: white;
+      padding: 6rem 0;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .hero::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background:
+        radial-gradient(circle at 30% 20%, rgba(255,255,255,0.1) 0%, transparent 50%),
+        radial-gradient(circle at 70% 80%, rgba(255,255,255,0.05) 0%, transparent 50%);
+      animation: heroFloat 15s ease-in-out infinite;
+    }
+
+    @keyframes heroFloat {
+      0%, 100% { transform: translateY(0px) rotate(0deg); }
+      50% { transform: translateY(-30px) rotate(1deg); }
+    }
+
+    .hero-content {
+      position: relative;
+      z-index: 1;
+    }
+
+    .hero-content {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .hero-title {
+      font-size: clamp(2rem, 5vw, 3.5rem);
+      font-weight: 800;
+      margin-bottom: 1.5rem;
+      text-shadow: 0 4px 20px rgba(0,0,0,0.2);
+      animation: titleReveal 1s ease-out;
+    }
+
+    @keyframes titleReveal {
+      from {
+        opacity: 0;
+        transform: translateY(30px) scale(0.9);
+      }
+      to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+      }
+    }
+
+    .hero-subtitle {
+      font-size: clamp(1.1rem, 3vw, 1.5rem);
+      margin-bottom: 3rem;
+      opacity: 0.95;
+      font-weight: 300;
+      letter-spacing: 0.5px;
+    }
+
+    .cta-buttons {
+      display: flex;
+      gap: 1.5rem;
+      justify-content: center;
+      margin-bottom: 3rem;
+      flex-wrap: wrap;
+    }
+
+    .btn {
+      padding: 1rem 2rem;
+      border-radius: var(--border-radius);
+      font-weight: 600;
+      text-decoration: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 0.75rem;
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+      font-size: 1rem;
+      box-shadow: var(--shadow-md);
+    }
+
+    .btn::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: -100%;
+      width: 100%;
+      height: 100%;
+      background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
+      transition: left 0.5s;
+    }
+
+    .btn:hover::before {
+      left: 100%;
+    }
+
+    .btn-primary {
+      background: white;
+      color: var(--primary);
+      border: none;
+    }
+
+    .btn-primary:hover {
+      background: var(--light);
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .btn-secondary {
+      background: rgba(255,255,255,0.15);
+      color: white;
+      border: 2px solid rgba(255,255,255,0.3);
+      backdrop-filter: blur(10px);
+    }
+
+    .btn-secondary:hover {
+      background: rgba(255,255,255,0.25);
+      transform: translateY(-4px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .btn i {
+      font-size: 1.1rem;
+    }
+
+    /* Wallet Section - Modern UI */
+    .wallet-section {
+      padding: 5rem 0;
+      position: relative;
+      background: var(--light);
+    }
+
+    .wallet-section::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background:
+        linear-gradient(135deg, rgba(94,53,177,0.03) 0%, rgba(30,136,229,0.03) 100%),
+        radial-gradient(circle at 50% 50%, rgba(67,233,123,0.02) 0%, transparent 70%);
+      backdrop-filter: blur(10px);
+      z-index: -1;
+    }
+
+    .section-title {
+      text-align: center;
+      margin-bottom: 3rem;
+      font-size: clamp(1.8rem, 4vw, 2.5rem);
+      color: var(--primary);
+      position: relative;
+      display: inline-block;
+      font-weight: 700;
+    }
+
+    .section-title::after {
+      content: '';
+      position: absolute;
+      bottom: -15px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: 60px;
+      height: 4px;
+      background: var(--gradient-1);
+      border-radius: 2px;
+      box-shadow: 0 2px 10px rgba(94,53,177,0.3);
+    }
+
+    .wallet-container {
+      display: flex;
+      gap: 2rem;
+      flex-wrap: wrap;
+    }
+
+    .wallet-card {
+      flex: 1;
+      min-width: 300px;
+      background: rgba(255, 255, 255, 0.8);
+      border-radius: 1rem;
+      padding: 1.5rem;
+      box-shadow: 0 8px 32px rgba(94,53,177,0.1);
+      backdrop-filter: blur(8px);
+      border: 1px solid rgba(255, 255, 255, 0.2);
+      transition: all 0.3s ease;
+    }
+
+    .wallet-card:hover {
+      transform: translateY(-5px);
+      box-shadow: 0 12px 40px rgba(94,53,177,0.15);
+      background: rgba(255, 255, 255, 0.9);
+    }
+
+    .wallet-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      width: 100%;
+      height: 5px;
+      background: linear-gradient(90deg, var(--primary), var(--secondary));
+      border-radius: 1rem 1rem 0 0;
+    }
+
+    .wallet-card h3 {
+      color: var(--primary);
+      margin-bottom: 1.5rem;
+      font-size: 1.5rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .wallet-card h3 i {
+      font-size: 1.2rem;
+    }
+
+    .wallet-actions {
+      display: flex;
+      gap: 1rem;
+      margin-bottom: 1.5rem;
+    }
+
+    .wallet-btn {
+      flex: 1;
+      background: linear-gradient(135deg, var(--primary), var(--primary-light));
+      color: white;
+      border: none;
+      padding: 0.75rem;
+      border-radius: 0.5rem;
+      font-weight: 500;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      transition: all 0.3s ease;
+      position: relative;
+      overflow: hidden;
+    }
+
+    .wallet-btn::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(
+        to bottom right,
+        rgba(255,255,255,0) 0%,
+        rgba(255,255,255,0) 45%,
+        rgba(255,255,255,0.3) 50%,
+        rgba(255,255,255,0) 55%,
+        rgba(255,255,255,0) 100%
+      );
+      transform: rotate(30deg);
+      transition: all 0.7s;
+    }
+
+    .wallet-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 5px 15px rgba(94,53,177,0.3);
+    }
+
+    .wallet-btn:hover::after {
+      left: 100%;
+    }
+
+    .wallet-info {
+      display: flex;
+      gap: 1.5rem;
+      margin-bottom: 1.5rem;
+      align-items: center;
+    }
+
+    .wallet-qr {
+      width: 120px;
+      height: 120px;
+      background: white;
+      border: 1px solid var(--gray);
+      border-radius: 0.5rem;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: all 0.3s ease;
+      position: relative;
+    }
+
+    .wallet-qr:hover {
+      transform: scale(1.05);
+      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+    }
+
+    .wallet-details {
+      flex: 1;
+    }
+
+    .wallet-details p {
+      margin-bottom: 1rem;
+      position: relative;
+      padding-left: 1.75rem;
+      overflow-wrap: break-word;
+      word-wrap: break-word;
+      word-break: break-all;
+      font-family: 'Poppins', monospace;
+      font-size: 0.95rem;
+      line-height: 1.5;
+      transition: all 0.3s ease;
+      letter-spacing: 0.02em;
+    }
+
+    .wallet-details p:hover {
+      transform: translateX(5px);
+    }
+
+    .wallet-details p::before {
+      content: '•';
+      position: absolute;
+      left: 0;
+      color: var(--primary);
+      font-weight: bold;
+      font-size: 1.2rem;
+      top: 50%;
+      transform: translateY(-50%);
+      opacity: 0.8;
+      transition: all 0.3s ease;
+    }
+
+    .wallet-details p:hover::before {
+      color: var(--secondary);
+      transform: translateY(-50%) scale(1.2);
+    }
+
+    .wallet-details .address {
+      background: linear-gradient(135deg, rgba(94,53,177,0.1) 0%, rgba(30,136,229,0.1) 100%);
+      padding: 0.75rem 1rem;
+      border-radius: 0.5rem;
+      margin: 0.75rem 0;
+      border: 1px solid rgba(94,53,177,0.1);
+      box-shadow: 0 2px 10px rgba(94,53,177,0.05);
+      font-family: 'Space Mono', monospace;
+      font-size: 0.9rem;
+      letter-spacing: 0.5px;
+      color: var(--primary);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .wallet-details .address::after {
+      content: '';
+      position: absolute;
+      top: -50%;
+      left: -50%;
+      width: 200%;
+      height: 200%;
+      background: linear-gradient(
+        45deg,
+        transparent 0%,
+        rgba(255,255,255,0.1) 50%,
+        transparent 100%
+      );
+      transform: rotate(30deg);
+      animation: shimmer 3s infinite linear;
+    }
+
+    @keyframes shimmer {
+      0% {
+        transform: translateX(-100%) rotate(30deg);
+      }
+      100% {
+        transform: translateX(100%) rotate(30deg);
+      }
+    }
+
+    .wallet-details .label {
+      font-size: 0.85rem;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      color: var(--text-light);
+      margin-bottom: 0.25rem;
+      background: linear-gradient(135deg, var(--primary), var(--secondary));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      font-weight: 600;
+    }
+
+    .wallet-details .value {
+      font-size: 1.5rem;
+      font-weight: 600;
+      color: var(--primary);
+      padding: 0.5rem;
+      border-radius: 0.5rem;
+      background: rgba(94,53,177,0.05);
+      display: inline-block;
+      transition: all 0.3s ease;
+      margin: 0.5rem 0;
+    }
+
+    .wallet-details .value:hover {
+      transform: scale(1.05);
+      background: rgba(94,53,177,0.1);
+    }
+
+    .loading {
+        position: relative;
+        opacity: 0.7;
+        pointer-events: none;
+    }
+
+    .loading::after {
+        content: '';
+        position: absolute;
+        top: 50%;
+        left: 50%;
+        width: 1.5rem;
+        height: 1.5rem;
+        border: 2px solid var(--primary);
+        border-radius: 50%;
+        border-top-color: transparent;
+        animation: spin 1s linear infinite;
+    }
+
+    @keyframes spin {
+        to { transform: rotate(360deg); }
+    }
+
+    .success-animation {
+        animation: successPulse 0.5s ease;
+    }
+
+    @keyframes successPulse {
+        0% { transform: scale(1); }
+        50% { transform: scale(1.05); }
+        100% { transform: scale(1); }
+    }
+
+    @media (prefers-color-scheme: dark) {
+      .wallet-details .value {
+        background: rgba(94,53,177,0.15);
+        color: var(--dark-text);
+      }
+      
+      .wallet-details .value:hover {
+        background: rgba(94,53,177,0.25);
+      }
+
+      .loading::after {
+        border-color: var(--dark-text);
+        border-top-color: transparent;
+      }
+    }
+
+    .private-key-toggle {
+      margin-top: 1rem;
+    }
+
+    .private-key-toggle button {
+      background: var(--gradient-1);
+      border: none;
+      color: white;
+      cursor: pointer;
+      font-size: 0.9rem;
+      font-weight: 500;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      transition: var(--transition);
+      padding: 0.625rem 1rem;
+      border-radius: var(--border-radius);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .private-key-toggle button:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-md);
+    }
+
+    .private-key-toggle button i {
+      transition: transform 0.3s ease;
+    }
+
+    .private-key-toggle button:hover i {
+      transform: rotate(90deg);
+    }
+
+    .hidden {
+      display: none;
+      animation: fadeIn 0.3s ease;
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; }
+      to { opacity: 1; }
+    }
+
+    /* Send Form */
+    .form-group {
+      margin-bottom: 1.75rem;
+      position: relative;
+    }
+
+    label {
+      display: block;
+      margin-bottom: 0.75rem;
+      font-weight: 600;
+      color: var(--text);
+      font-size: 0.95rem;
+    }
+
+    input[type="text"],
+    input[type="number"] {
+      width: 100%;
+      padding: 1rem;
+      border: 2px solid var(--gray);
+      border-radius: var(--border-radius);
+      font-family: inherit;
+      font-size: 1rem;
+      transition: var(--transition);
+      background: white;
+    }
+
+    input[type="text"]:focus,
+    input[type="number"]:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(94,53,177,0.1);
+    }
+
+    .qr-btn {
+      position: absolute;
+      right: 0.75rem;
+      top: 3.2rem;
+      background: var(--gradient-3);
+      border: none;
+      color: white;
+      cursor: pointer;
+      width: 2.5rem;
+      height: 2.5rem;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      transition: var(--transition);
+      box-shadow: var(--shadow-sm);
+    }
+
+    .qr-btn:hover {
+      transform: scale(1.1);
+      box-shadow: var(--shadow-md);
+    }
+
+    .send-btn {
+      background: var(--gradient-4);
+      color: white;
+      border: none;
+      padding: 1rem;
+      border-radius: var(--border-radius);
+      width: 100%;
+      font-weight: 600;
+      font-size: 1rem;
+      cursor: pointer;
+      transition: var(--transition);
+      box-shadow: var(--shadow-md);
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+    }
+
+    .send-btn:hover {
+      transform: translateY(-2px);
+      box-shadow: var(--shadow-lg);
+    }
+
+    .send-btn:active {
+      transform: translateY(0);
+    }
+
+    /* Features Section */
+    .features {
+      padding: 5rem 0;
+      background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+    }
+
+    .features-grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+      gap: 2.5rem;
+      max-width: 1200px;
+      margin: 0 auto;
+    }
+
+    .feature-card {
+      padding: 2.5rem;
+      border-radius: var(--border-radius);
+      background: white;
+      box-shadow: var(--shadow-md);
+      transition: var(--transition);
+      position: relative;
+      overflow: hidden;
+    }
+
+    .feature-card::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 4px;
+      background: var(--gradient-2);
+      transform: scaleX(0);
+      transition: transform 0.3s ease;
+    }
+
+    .feature-card:hover::before {
+      transform: scaleX(1);
+    }
+
+    .feature-card:hover {
+      transform: translateY(-8px);
+      box-shadow: var(--shadow-xl);
+    }
+
+    .feature-card i {
+      font-size: 2.5rem;
+      background: var(--gradient-1);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      margin-bottom: 1.5rem;
+      display: block;
+    }
+
+    .feature-card h4 {
+      margin-bottom: 1rem;
+      color: var(--primary);
+      font-size: 1.3rem;
+      font-weight: 700;
+    }
+
+    .feature-card p {
+      color: var(--text-light);
+      line-height: 1.7;
+      font-size: 0.95rem;
+    }
+
+    /* Footer */
+    footer {
+      background: var(--dark);
+      color: white;
+      padding: 4rem 0 2rem;
+      text-align: center;
+      position: relative;
+      overflow: hidden;
+    }
+
+    footer::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      height: 2px;
+      background: var(--gradient-1);
+    }
+
+    .footer-links {
+      display: flex;
+      justify-content: center;
+      gap: 2.5rem;
+      margin: 2rem 0;
+      flex-wrap: wrap;
+    }
+
+    .footer-links a {
+      color: rgba(255,255,255,0.8);
+      text-decoration: none;
+      transition: var(--transition);
+      font-weight: 500;
+      position: relative;
+      padding: 0.5rem 0;
+    }
+
+    .footer-links a::after {
+      content: '';
+      position: absolute;
+      bottom: 0;
+      left: 0;
+      width: 0;
+      height: 2px;
+      background: var(--gradient-1);
+      transition: width 0.3s ease;
+    }
+
+    .footer-links a:hover {
+      color: white;
+    }
+
+    .footer-links a:hover::after {
+      width: 100%;
+    }
+
+    .copyright {
+      color: var(--text-light);
+      font-size: 0.9rem;
+      margin-top: 2rem;
+      padding-top: 2rem;
+      border-top: 1px solid rgba(255,255,255,0.1);
+    }
+
+    @media (max-width: 768px) {
+      .wallet-container {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+      
+      .hero-title {
+        font-size: 2rem;
+      }
+      
+      .cta-buttons {
+        flex-direction: column;
+        gap: 1rem;
+      }
+      
+      .btn {
+        padding: 0.875rem 1.75rem;
+        font-size: 0.95rem;
+      }
+      
+      .wallet-card {
+        padding: 2rem;
+      }
+      
+      .features-grid {
+        grid-template-columns: 1fr;
+        gap: 2rem;
+      }
+      
+      .footer-links {
+        flex-direction: column;
+        gap: 1.5rem;
+      }
+      
+      .header-container {
+        flex-direction: column;
+        gap: 1rem;
+      }
+    }
+
+    @media (max-width: 480px) {
+      .hero {
+        padding: 4rem 0;
+      }
+      
+      .hero-title {
+        font-size: 1.75rem;
+      }
+      
+      .hero-subtitle {
+        font-size: 1.1rem;
+      }
+      
+      .section-title {
+        font-size: 1.8rem;
+      }
+      
+      .wallet-card {
+        padding: 1.5rem;
+      }
+      
+      .wallet-actions {
+        flex-direction: column;
+        gap: 0.75rem;
+      }
+      
+      .wallet-btn {
+        padding: 0.75rem;
+        font-size: 0.85rem;
+      }
+    }
+  </style>
 </head>
 <body>
-    <header>
-        <h1>OWami Network Simplified</h1>
-        <p>Testnet Interface for Token Operations and DApp Deployment</p>
-    </header>
+  <header>
+    <div class="container header-container">
+      <div class="logo">
+        <i class="fas fa-link logo-icon"></i>
+        <span class="logo-text">Owami Network</span>
+      </div>
+      <div class="status-badge">
+        <i class="fas fa-circle"></i>
+        <span>Testnet Live</span>
+      </div>
+    </div>
+  </header>
 
-    <main>
-        <section id="token-section">
-            <h2>OWami Token (OWA)</h2>
-            <div class="card">
-                <h3>Token Information</h3>
-                <button onclick="loadTokenInfo()">Load Token Info</button>
-                <div id="token-info" class="result"></div>
+  <section class="hero">
+    <div class="container hero-content">
+      <h1 class="hero-title">Empowering Africa's Digital Economy</h1>
+      <p class="hero-subtitle">A high-performance blockchain platform designed for Africa's unique needs</p>
+      <div class="cta-buttons">
+        <a href="#wallet-section" class="btn btn-primary">
+          <i class="fas fa-wallet"></i> Get Started
+        </a>
+        <a href="/API_DOCS.md" class="btn btn-secondary" target="_blank">
+          <i class="fas fa-code"></i> Developer Docs
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <section class="wallet-section container" id="wallet-section">
+    <h2 class="section-title">Wallet Management</h2>
+    <div class="wallet-container">
+      <div class="wallet-card">
+        <h3>Your Wallet</h3>
+        <div class="wallet-actions">
+          <button class="wallet-btn" onclick="generateWallet()">
+            <i class="fas fa-wallet"></i> Create Wallet
+          </button>
+          <button class="wallet-btn" onclick="exportWallet()">
+            <i class="fas fa-file-export"></i> Export
+          </button>
+        </div>
+        <div class="wallet-info">
+          <div class="wallet-qr" id="walletQr"></div>
+          <div class="wallet-details">
+            <p><strong>Address:</strong> <span id="walletAddress">-</span></p>
+            <p><strong>Balance:</strong> <span id="walletBalance">-</span> OWA</p>
+            <div class="private-key-toggle">
+              <button onclick="togglePrivateKey()">
+                <i class="fas fa-eye"></i> Show Private Key
+              </button>
+              <p id="privateKey" class="hidden">-</p>
             </div>
+          </div>
+        </div>
+      </div>
 
-            <div class="card">
-                <h3>Check Balance</h3>
-                <input type="text" id="balance-address" placeholder="Enter address (0x...)" />
-                <button onclick="checkBalance()">Check Balance</button>
-                <div id="balance-result" class="result"></div>
-            </div>
+      <div class="wallet-card">
+        <h3>Send Tokens</h3>
+        <div class="form-group">
+          <label>Recipient Address</label>
+          <input type="text" id="recipient" placeholder="Enter wallet address" />
+          <button class="qr-btn" onclick="scanQr()">
+            <i class="fas fa-qrcode"></i>
+          </button>
+        </div>
+        <div class="form-group">
+          <label>Amount (OWA)</label>
+          <input type="number" id="amount" placeholder="0.00" min="0" step="0.001" />
+        </div>
+        <button class="send-btn" onclick="sendTokens()">
+          <i class="fas fa-paper-plane"></i> Send Tokens
+        </button>
+      </div>
+    </div>
+  </section>
 
-            <div class="card">
-                <h3>Transfer Tokens</h3>
-                <input type="text" id="transfer-from" placeholder="From address" />
-                <input type="text" id="transfer-to" placeholder="To address" />
-                <input type="text" id="transfer-amount" placeholder="Amount" />
-                <button onclick="transferTokens()">Transfer</button>
-                <div id="transfer-result" class="result"></div>
-            </div>
+  <section class="features">
+    <div class="container">
+      <h2 class="section-title">Key Features</h2>
+      <div class="features-grid">
+        <div class="feature-card">
+          <i class="fas fa-bolt"></i>
+          <h4>High Performance</h4>
+          <p>Scalable architecture designed for Africa's growing digital economy needs.</p>
+        </div>
+        <div class="feature-card">
+          <i class="fas fa-shield-alt"></i>
+          <h4>Regulatory Compliance</h4>
+          <p>Built-in features to support compliance with African financial regulations.</p>
+        </div>
+        <div class="feature-card">
+          <i class="fas fa-users"></i>
+          <h4>Community Focused</h4>
+          <p>Designed with African developers and users in mind.</p>
+        </div>
+      </div>
+    </div>
+  </section>
 
-            <div class="card">
-                <h3>Mint Tokens</h3>
-                <input type="text" id="mint-to" placeholder="To address" />
-                <input type="text" id="mint-amount" placeholder="Amount" />
-                <button onclick="mintTokens()">Mint</button>
-                <div id="mint-result" class="result"></div>
-            </div>
+  <footer>
+    <div class="container">
+      <div class="footer-links">
+        <a href="/API_DOCS.md" target="_blank">API Docs</a>
+        <a href="/TESTNET_GUIDE.md" target="_blank">Testnet Guide</a>
+        <a href="/INVESTOR_DEMO.md" target="_blank">Investor Info</a>
+        <a href="mailto:info@owaminetwork.org">Contact Us</a>
+      </div>
+      <p class="copyright">&copy; 2025 Owami Network. All rights reserved.</p>
+    </div>
+  </footer>
 
-            <div class="card">
-                <h3>Recent Transactions</h3>
-                <button onclick="loadTransactions()">Load Transactions</button>
-                <div id="transactions" class="result"></div>
-            </div>
-        </section>
+  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
+  <script>
+    const qrcode = new QRCode(document.getElementById("walletQr"), {
+      width: 100,
+      height: 100
+    });
 
-        <section id="dapp-section">
-            <h2>DApp Deployment</h2>
-            <div class="card">
-                <h3>Deploy DApp</h3>
-                <input type="text" id="dapp-name" placeholder="DApp Name" />
-                <input type="text" id="dapp-address" placeholder="Contract Address" />
-                <button onclick="deployDApp()">Deploy DApp</button>
-                <div id="deploy-result" class="result"></div>
-            </div>
+    async function generateWallet() {
+      const res = await fetch('http://localhost:8080/api/wallets/create', { method: 'POST' });
+      const data = await res.json();
+      document.getElementById('walletAddress').innerText = data.address;
+      document.getElementById('privateKey').innerText = data.private_key || 'hidden';
+      qrcode.makeCode(data.address);
+      getBalance();
+    }
 
-            <div class="card">
-                <h3>Your DApps</h3>
-                <input type="text" id="user-address" placeholder="Your address" />
-                <button onclick="loadUserDApps()">Load My DApps</button>
-                <div id="user-dapps" class="result"></div>
-            </div>
-        </section>
-    </main>
+    async function getBalance() {
+      const address = document.getElementById('walletAddress').innerText;
+      if (!address || address === '-') return;
+      const res = await fetch(`http://localhost:8080/api/wallets/${address}/balance`);
+      const data = await res.json();
+      document.getElementById('walletBalance').innerText = data.balance ?? '0';
+    }
 
-    <footer>
-        <p>OWami Network Simplified Testnet - Built with Rust, Axum, and PostgreSQL</p>
-    </footer>
+    function togglePrivateKey() {
+      const el = document.getElementById('privateKey');
+      el.classList.toggle('hidden');
+    }
 
-    <script src="js/owa-token.js"></script>
-    <script src="js/dapp.js"></script>
-    <script src="js/app.js"></script>
+    async function sendTokens() {
+      const from = document.getElementById('walletAddress').innerText;
+      const to = document.getElementById('recipient').value;
+      const amount = parseFloat(document.getElementById('amount').value);
+      if (!from || !to || !amount) return alert('Please fill all fields');
+      
+      await fetch('http://localhost:8080/api/transactions/send', {
+        method: 'POST',
+        headers: {'Content-Type': 'application/json'},
+        body: JSON.stringify({from, to, amount})
+      });
+      
+      getBalance();
+    }
+
+    function exportWallet() {
+      const address = document.getElementById('walletAddress').innerText;
+      const privateKey = document.getElementById('privateKey').innerText;
+      
+      if (!address || address === '-') return alert('No wallet to export');
+      
+      const blob = new Blob([`Address: ${address}\nPrivate Key: ${privateKey}`], {type: 'text/plain'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = `owami-wallet-${address.slice(0,8)}.txt`;
+      a.click();
+    }
+
+    function scanQr() {
+      alert('QR scanning functionality will be implemented in the next version');
+    }
+  </script>
+    <script>
+        async function createWallet() {
+            try {
+                const response = await fetch('/api/wallets/create', {
+                    method: 'POST'
+                });
+                const wallet = await response.json();
+                return wallet;
+            } catch (error) {
+                console.error('Error creating wallet:', error);
+                throw error;
+            }
+        }
+
+        async function getTestTokens(walletAddress) {
+            try {
+                const response = await fetch('/api/faucet', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ address: walletAddress })
+                });
+                const result = await response.json();
+                return result;
+            } catch (error) {
+                console.error('Error getting test tokens:', error);
+                throw error;
+            }
+        }
+
+        document.getElementById('create-wallet-btn').addEventListener('click', async () => {
+            const btn = document.getElementById('create-wallet-btn');
+            const addressContainer = document.getElementById('wallet-address');
+            const balanceContainer = document.getElementById('wallet-balance');
+            
+            try {
+                btn.classList.add('loading');
+                btn.textContent = 'Creating Wallet...';
+                addressContainer.innerHTML = '<div class="label">Creating wallet...</div>';
+                
+                const wallet = await createWallet();
+                addressContainer.innerHTML = `
+                    <div class="label">Wallet Address</div>
+                    <div class="address success-animation">${wallet.address}</div>
+                `;
+                
+                balanceContainer.innerHTML = `
+                    <div class="label">Requesting Test Tokens...</div>
+                `;
+                
+                const tokens = await getTestTokens(wallet.address);
+                balanceContainer.innerHTML = `
+                    <div class="label">Balance</div>
+                    <div class="value success-animation">${tokens.balance} OWA</div>
+                `;
+                
+                btn.textContent = 'Wallet Created ✓';
+                setTimeout(() => {
+                    btn.textContent = 'Create New Wallet';
+                }, 2000);
+            } catch (error) {
+                addressContainer.innerHTML = `
+                    <div class="label" style="color: var(--danger)">Error creating wallet</div>
+                    <div class="value" style="color: var(--danger)">Please try again</div>
+                `;
+                btn.textContent = 'Try Again';
+            } finally {
+                btn.classList.remove('loading');
+            }
+        });
+    </script>
+    <script>
+        async function createWallet() {
+            try {
+                const response = await fetch('/api/wallet/create', {
+                    method: 'POST'
+                });
+                const wallet = await response.json();
+                return wallet;
+            } catch (error) {
+                console.error('Error creating wallet:', error);
+                throw error;
+            }
+        }
+
+        async function getTestToken(walletAddress) {
+            try {
+                const response = await fetch('/api/faucet', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ address: walletAddress })
+                });
+                const result = await response.json();
+                return result;
+            } catch (error) {
+                console.error('Error getting test token:', error);
+                throw error;
+            }
+        }
+
+        document.getElementById('create-wallet-btn').addEventListener('click', async () => {
+            try {
+                const wallet = await createWallet();
+                document.getElementById('wallet-address').textContent = wallet.address;
+                const token = await getTestToken(wallet.address);
+                document.getElementById('wallet-balance').textContent = token.balance;
+                alert('Wallet created successfully!');
+            } catch (error) {
+                alert('Error creating wallet. Please try again.');
+            }
+        });
+    </script>
+    <script>
+        async function createWallet() {
+            try {
+                const response = await fetch('/api/wallet/create', {
+                    method: 'POST'
+                });
+                const wallet = await response.json();
+                return wallet;
+            } catch (error) {
+                console.error('Error creating wallet:', error);
+                throw error;
+            }
+        }
+
+        async function getTestToken(walletAddress) {
+            try {
+                const response = await fetch('/api/faucet', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ address: walletAddress })
+                });
+                const result = await response.json();
+                return result;
+            } catch (error) {
+                console.error('Error getting test token:', error);
+                throw error;
+            }
+        }
+
+        document.getElementById('create-wallet-btn').addEventListener('click', async () => {
+            try {
+                const wallet = await createWallet();
+                document.getElementById('wallet-address').textContent = wallet.address;
+                const token = await getTestToken(wallet.address);
+                document.getElementById('wallet-balance').textContent = token.balance;
+                alert('Wallet created successfully!');
+            } catch (error) {
+                alert('Error creating wallet. Please try again.');
+            }
+        });
+    </script>
+    <script>
+        async function createWallet() {
+            try {
+                const response = await fetch('/api/wallet/create', {
+                    method: 'POST'
+                });
+                const wallet = await response.json();
+                return wallet;
+            } catch (error) {
+                console.error('Error creating wallet:', error);
+                throw error;
+            }
+        }
+
+        async function getTestToken(walletAddress) {
+            try {
+                const response = await fetch('/api/faucet', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ address: walletAddress })
+                });
+                const result = await response.json();
+                return result;
+            } catch (error) {
+                console.error('Error getting test token:', error);
+                throw error;
+            }
+        }
+
+        document.getElementById('create-wallet-btn').addEventListener('click', async () => {
+            try {
+                const wallet = await createWallet();
+                document.getElementById('wallet-address').textContent = wallet.address;
+                const token = await getTestToken(wallet.address);
+                document.getElementById('wallet-balance').textContent = token.balance;
+                alert('Wallet created successfully!');
+            } catch (error) {
+                alert('Error creating wallet. Please try again.');
+            }
+        });
+    </script>
+    <script>
+        async function createWallet() {
+            try {
+                const response = await fetch('/api/wallet/create', {
+                    method: 'POST'
+                });
+                const wallet = await response.json();
+                return wallet;
+            } catch (error) {
+                console.error('Error creating wallet:', error);
+                throw error;
+            }
+        }
+
+        async function getTestToken(walletAddress) {
+            try {
+                const response = await fetch('/api/faucet', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ address: walletAddress })
+                });
+                const result = await response.json();
+                return result;
+            } catch (error) {
+                console.error('Error getting test token:', error);
+                throw error;
+            }
+        }
+
+        document.getElementById('create-wallet-btn').addEventListener('click', async () => {
+            try {
+                const wallet = await createWallet();
+                document.getElementById('wallet-address').textContent = wallet.address;
+                const token = await getTestToken(wallet.address);
+                document.getElementById('wallet-balance').textContent = token.balance;
+                alert('Wallet created successfully!');
+            } catch (error) {
+                alert('Error creating wallet. Please try again.');
+            }
+        });
+    </script>
+    <script>
+        async function createWallet() {
+            try {
+                const response = await fetch('/api/wallet/create', {
+                    method: 'POST'
+                });
+                const wallet = await response.json();
+                return wallet;
+            } catch (error) {
+                console.error('Error creating wallet:', error);
+                throw error;
+            }
+        }
+
+        async function getTestToken(walletAddress) {
+            try {
+                const response = await fetch('/api/faucet', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ address: walletAddress })
+                });
+                const result = await response.json();
+                return result;
+            } catch (error) {
+                console.error('Error getting test token:', error);
+                throw error;
+            }
+        }
+
+        document.getElementById('create-wallet-btn').addEventListener('click', async () => {
+            try {
+                const wallet = await createWallet();
+                document.getElementById('wallet-address').textContent = wallet.address;
+                const token = await getTestToken(wallet.address);
+                document.getElementById('wallet-balance').textContent = token.balance;
+                alert('Wallet created successfully!');
+            } catch (error) {
+                alert('Error creating wallet. Please try again.');
+            }
+        });
+    </script>
 </body>
 </html>
