@@ -1,259 +1,158 @@
+// Main application JavaScript
+const API_BASE_URL = 'http://localhost:3000';
+const token = new OWamiToken(API_BASE_URL);
+
+// Utility functions
+function showResult(elementId, content, isError = false) {
+    const element = document.getElementById(elementId);
+    element.textContent = typeof content === 'string' ? content : JSON.stringify(content, null, 2);
+    element.className = 'result ' + (isError ? 'error' : 'success');
+}
+
+function showLoading(elementId) {
+    const element = document.getElementById(elementId);
+    element.textContent = 'Loading...';
+    element.className = 'result';
+}
+
+// Token operations
+async function loadTokenInfo() {
+    try {
+        showLoading('token-info');
+        const info = await token.getTokenInfo();
+        showResult('token-info', info);
+    } catch (error) {
+        showResult('token-info', `Error: ${error.message}`, true);
+    }
+}
+
+async function checkBalance() {
+    const address = document.getElementById('balance-address').value;
+    if (!address) {
+        showResult('balance-result', 'Please enter an address', true);
+        return;
+    }
+
+    try {
+        showLoading('balance-result');
+        const balance = await token.getBalance(address);
+        showResult('balance-result', balance);
+    } catch (error) {
+        showResult('balance-result', `Error: ${error.message}`, true);
+    }
+}
+
+async function transferTokens() {
+    const from = document.getElementById('transfer-from').value;
+    const to = document.getElementById('transfer-to').value;
+    const amount = document.getElementById('transfer-amount').value;
+
+    if (!from || !to || !amount) {
+        showResult('transfer-result', 'Please fill in all fields', true);
+        return;
+    }
+
+    try {
+        showLoading('transfer-result');
+        const result = await token.transfer(from, to, amount);
+        showResult('transfer-result', result);
+    } catch (error) {
+        showResult('transfer-result', `Error: ${error.message}`, true);
+    }
+}
+
+async function mintTokens() {
+    const to = document.getElementById('mint-to').value;
+    const amount = document.getElementById('mint-amount').value;
+
+    if (!to || !amount) {
+        showResult('mint-result', 'Please fill in all fields', true);
+        return;
+    }
+
+    try {
+        showLoading('mint-result');
+        const result = await token.mint(to, amount);
+        showResult('mint-result', result);
+    } catch (error) {
+        showResult('mint-result', `Error: ${error.message}`, true);
+    }
+}
+
+async function loadTransactions() {
+    try {
+        showLoading('transactions');
+        const transactions = await token.getTransactions();
+        showResult('transactions', transactions);
+    } catch (error) {
+        showResult('transactions', `Error: ${error.message}`, true);
+    }
+}
+
+// DApp operations
+async function deployDApp() {
+    const name = document.getElementById('dapp-name').value;
+    const address = document.getElementById('dapp-address').value;
+
+    if (!name || !address) {
+        showResult('deploy-result', 'Please fill in all fields', true);
+        return;
+    }
+
+    try {
+        showLoading('deploy-result');
+        const response = await fetch(`${API_BASE_URL}/api/dapp`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ name, address }),
+        });
+
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+
+        const result = await response.json();
+        showResult('deploy-result', result);
+    } catch (error) {
+        showResult('deploy-result', `Error: ${error.message}`, true);
+    }
+}
+
+async function loadUserDApps() {
+    const address = document.getElementById('user-address').value;
+    if (!address) {
+        showResult('user-dapps', 'Please enter an address', true);
+        return;
+    }
+
+    try {
+        showLoading('user-dapps');
+        const response = await fetch(`${API_BASE_URL}/api/dapp/user/${address}`);
+        if (!response.ok) {
+            throw new Error(`HTTP error! status: ${response.status}`);
+        }
+        const dapps = await response.json();
+        showResult('user-dapps', dapps);
+    } catch (error) {
+        showResult('user-dapps', `Error: ${error.message}`, true);
+    }
+}
+
+// Initialize
 document.addEventListener('DOMContentLoaded', () => {
-    // --- DOM Elements ---
-    const elements = {
-        themeToggle: document.getElementById('theme-toggle'),
-        mobileMenuToggle: document.getElementById('mobile-menu-toggle'),
-        mobileMenu: document.getElementById('mobile-menu'),
-        createWalletBtn: document.getElementById('create-wallet'),
-        exportWalletBtn: document.getElementById('export-wallet'),
-        sendTokensBtn: document.getElementById('send-tokens'),
-        requestTokensBtn: document.getElementById('request-tokens'),
-        claimVestedBtn: document.getElementById('claim-vested'),
-        refreshTxBtn: document.getElementById('refresh-tx'),
-        generateKeyBtn: document.getElementById('generate-key'),
-        walletInfo: document.getElementById('wallet-info'),
-        apiKeyInfo: document.getElementById('api-key-info'),
-        recipientInput: document.getElementById('recipient'),
-        amountInput: document.getElementById('amount'),
-        transactionsList: document.getElementById('transactions-list'),
-        vestingInfo: document.getElementById('vesting-info'),
-    };
+    // Load initial data
+    loadTokenInfo();
+    loadTransactions();
+});
 
-    // --- API Configuration ---
-    const API_BASE = '/api';
-    const ENDPOINTS = {
-        createWallet: `/wallets/create`,
-        getBalance: (address) => `/wallets/${address}/balance`,
-        getTransactions: (address) => `/wallets/${address}/transactions`,
-        sendTokens: `/transactions`,
-        faucet: `/faucet`,
-        vestingClaimable: (address) => `/vesting/claimable?address=${address}`,
-        vestingClaim: `/vesting/claim`,
-        generateKey: `${API_BASE}/keys/generate`,
-    };
-
-    // --- State ---
-    let wallet = null;
-
-    // --- Functions ---
-    const apiRequest = async (url, options = {}) => {
-        try {
-            const response = await fetch(url, options);
-            if (!response.ok) {
-                const errorData = await response.json().catch(() => ({ message: 'An unknown error occurred' }));
-                throw new Error(errorData.message || `HTTP error! status: ${response.status}`);
-            }
-            return response.json();
-        } catch (error) {
-            console.error('API Request Failed:', error);
-            alert(`Error: ${error.message}`);
-            throw error;
+// Handle Enter key for inputs
+document.querySelectorAll('input[type="text"]').forEach(input => {
+    input.addEventListener('keypress', (e) => {
+        if (e.key === 'Enter') {
+            const button = e.target.parentElement.querySelector('button');
+            if (button) button.click();
         }
-    };
-
-    const updateWalletInfo = () => {
-        if (wallet) {
-            elements.walletInfo.innerHTML = `
-                <p><strong>Address:</strong> <span class="tx-address">${wallet.address}</span></p>
-                <p><strong>Balance:</strong> ${wallet.balance || 0} OWA</p>
-                <p class="private-key"><strong>Private Key:</strong> <span>${wallet.private_key}</span></p>
-            `;
-        } else {
-            elements.walletInfo.innerHTML = '<p>Create or load a wallet to begin.</p>';
-        }
-        elements.requestTokensBtn.disabled = !wallet;
-    };
-
-    const createWallet = async () => {
-        const newWallet = await apiRequest(ENDPOINTS.createWallet, { method: 'POST' });
-        wallet = { ...newWallet, balance: 0 };
-        localStorage.setItem('owamiWallet', JSON.stringify(wallet));
-        updateWalletInfo();
-        await fetchBalance();
-        await fetchTransactions();
-        await fetchVestingInfo();
-    };
-
-    const requestTokens = async () => {
-        if (!wallet) return;
-        await apiRequest(ENDPOINTS.faucet, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ address: wallet.address }),
-        });
-        await fetchBalance();
-    };
-
-    const fetchBalance = async () => {
-        if (!wallet) return;
-        const data = await apiRequest(ENDPOINTS.getBalance(wallet.address));
-        wallet.balance = data.balance;
-        updateWalletInfo();
-    };
-
-    const fetchTransactions = async () => {
-        if (!wallet) return;
-        const transactions = await apiRequest(ENDPOINTS.getTransactions(wallet.address));
-        elements.transactionsList.innerHTML = transactions.length ? '' : '<p>No transactions yet.</p>';
-        transactions.forEach(tx => {
-            const item = document.createElement('div');
-            item.className = 'transaction-item';
-            item.innerHTML = `
-                <div class="tx-icon"><i class="fas fa-exchange-alt"></i></div>
-                <div class="tx-details">
-                    <p class="tx-address"><strong>From:</strong> ${tx.from}</p>
-                    <p class="tx-address"><strong>To:</strong> ${tx.to}</p>
-                </div>
-                <div class="tx-amount">${tx.amount} OWA</div>
-            `;
-            elements.transactionsList.appendChild(item);
-        });
-    };
-
-    const sendTokens = async () => {
-        if (!wallet) return;
-        const to = elements.recipientInput.value;
-        const amount = parseFloat(elements.amountInput.value);
-        if (!to || !amount) return alert('Please enter a recipient and amount.');
-
-        await apiRequest(ENDPOINTS.sendTokens, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ from: wallet.address, to, amount }),
-        });
-
-        elements.recipientInput.value = '';
-        elements.amountInput.value = '';
-        alert('Transaction sent successfully!');
-        await fetchBalance();
-        await fetchTransactions();
-    };
-
-    const fetchVestingInfo = async () => {
-        if (!wallet) return;
-        const data = await apiRequest(ENDPOINTS.vestingClaimable(wallet.address));
-        if (data.claimable > 0) {
-            elements.vestingInfo.innerHTML = `<p>You have ${data.claimable} OWA available to claim.</p>`;
-            elements.claimVestedBtn.disabled = false;
-        } else {
-            elements.vestingInfo.innerHTML = '<p>No active vesting schedules.</p>';
-            elements.claimVestedBtn.disabled = true;
-        }
-    };
-
-    const claimVestedTokens = async () => {
-        if (!wallet) return;
-        await apiRequest(ENDPOINTS.vestingClaim, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ address: wallet.address }),
-        });
-        alert('Vested tokens claimed successfully!');
-        await fetchBalance();
-        await fetchVestingInfo();
-    };
-
-    const exportWallet = () => {
-        if (!wallet) return alert('No wallet to export.');
-        const data = `Address: ${wallet.address}\nPrivate Key: ${wallet.private_key}`;
-        const blob = new Blob([data], { type: 'text/plain' });
-        const url = URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
-        a.download = `owami-wallet.txt`;
-        a.click();
-        URL.revokeObjectURL(url);
-    };
-
-    const toggleTheme = () => {
-        document.body.classList.toggle('dark-mode');
-        localStorage.setItem('theme', document.body.classList.contains('dark-mode') ? 'dark' : 'light');
-        elements.themeToggle.innerHTML = `<i class="fas ${document.body.classList.contains('dark-mode') ? 'fa-sun' : 'fa-moon'}"></i>`;
-    };
-
-    const toggleMobileMenu = () => {
-        elements.mobileMenu.style.display = elements.mobileMenu.style.display === 'block' ? 'none' : 'block';
-    };
-
-    const closeMobileMenu = () => {
-        elements.mobileMenu.style.display = 'none';
-    };
-
-    const generateApiKey = async () => {
-        if (!wallet) {
-            alert('Please create a wallet first to associate with your API key.');
-            return;
-        }
-        const email = prompt('Please enter your email address to generate an API key:');
-        if (!email) return;
-
-        const apiKey = await apiRequest(ENDPOINTS.generateKey, {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ email }),
-        });
-
-        elements.apiKeyInfo.innerHTML = `
-            <p><strong>Your API Key:</strong></p>
-            <p class="tx-address">${apiKey.key}</p>
-            <p><small>Store this key securely. It will not be shown again.</small></p>
-        `;
-        elements.generateKeyBtn.disabled = true;
-    };
-
-    // --- Initialization ---
-    const init = () => {
-        // --- Universal Logic (Theme) ---
-        if (elements.themeToggle) {
-            if (localStorage.getItem('theme') === 'dark') {
-                document.body.classList.add('dark-mode');
-                elements.themeToggle.innerHTML = '<i class="fas fa-sun"></i>';
-            }
-            elements.themeToggle.addEventListener('click', toggleTheme);
-        }
-
-        // --- Mobile Menu ---
-        if (elements.mobileMenuToggle) {
-            elements.mobileMenuToggle.addEventListener('click', toggleMobileMenu);
-        }
-
-        // Close mobile menu when clicking on links
-        const mobileMenuLinks = document.querySelectorAll('#mobile-menu a');
-        mobileMenuLinks.forEach(link => {
-            link.addEventListener('click', closeMobileMenu);
-        });
-
-        // Close mobile menu when clicking outside
-        document.addEventListener('click', (event) => {
-            if (elements.mobileMenu && elements.mobileMenu.style.display === 'block' && 
-                !elements.mobileMenu.contains(event.target) && 
-                !elements.mobileMenuToggle.contains(event.target)) {
-                closeMobileMenu();
-            }
-        });
-
-        // --- Wallet Page Specific Logic ---
-        // We can detect if we are on the wallet page by checking for a key element.
-        if (elements.createWalletBtn) {
-            const savedWallet = localStorage.getItem('owamiWallet');
-            if (savedWallet) {
-                wallet = JSON.parse(savedWallet);
-                updateWalletInfo();
-                fetchBalance();
-                fetchTransactions();
-                fetchVestingInfo();
-            }
-
-            // Add event listeners for wallet page elements
-            elements.createWalletBtn.addEventListener('click', createWallet);
-            elements.exportWalletBtn.addEventListener('click', exportWallet);
-            elements.sendTokensBtn.addEventListener('click', sendTokens);
-            elements.requestTokensBtn.addEventListener('click', requestTokens);
-            elements.claimVestedBtn.addEventListener('click', claimVestedTokens);
-            elements.refreshTxBtn.addEventListener('click', fetchTransactions);
-            elements.generateKeyBtn.addEventListener('click', generateApiKey);
-        }
-    };
-
-    init();
+    });
 });

@@ -1,145 +1,82 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>Owami Network | The Future of African Finance</title>
-    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
-    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-    <link rel="stylesheet" href="css/style.css" />
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OWami Network - Simplified Testnet</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-    <header class="app-header">
-        <div class="container header-container">
-            <div class="logo">
-                <img src="../marketing/crypto_portions_logo_main.svg" alt="Owami Network Logo" class="logo-main">
-                <img src="../marketing/crypto_portions_logo_alt.svg" alt="Owami Network Icon" class="logo-alt">
-            </div>
-            <nav class="main-nav">
-                <a href="#features">Features</a>
-                <a href="#use-cases">Use Cases</a>
-                <a href="#developer-portal">Developers</a>
-                <a href="wallet.html">Wallet</a>
-                <a href="dapp.html">DApps</a>
-                <a href="api-docs.html" target="_blank">API Docs</a>
-            </nav>
-            <div class="header-actions">
-                <div class="status-badge">
-                    <i class="fas fa-circle"></i>
-                    <span>Testnet Live</span>
-                </div>
-                <button id="theme-toggle" class="theme-btn"><i class="fas fa-moon"></i></button>
-                <button id="mobile-menu-toggle" class="mobile-menu-btn">
-                    <i class="fas fa-bars"></i>
-                </button>
-            </div>
-        </div>
+    <header>
+        <h1>OWami Network Simplified</h1>
+        <p>Testnet Interface for Token Operations and DApp Deployment</p>
     </header>
 
-    <!-- Mobile Menu -->
-    <div id="mobile-menu" class="mobile-menu">
-        <div class="mobile-menu-content">
-            <a href="#features">Features</a>
-            <a href="#use-cases">Use Cases</a>
-            <a href="#developer-portal">Developers</a>
-            <a href="wallet.html">Wallet</a>
-            <a href="dapp.html">DApps</a>
-            <a href="api-docs.html" target="_blank">API Docs</a>
-        </div>
-    </div>
-
     <main>
-        <section class="hero">
-            <div class="container hero-content">
-                <h1 class="hero-title">Building Africa's Financial Future, Today.</h1>
-                <p class="hero-subtitle">A secure, scalable, and compliant blockchain platform designed to empower institutions, governments, and innovators across the continent.</p>
-                <div class="cta-buttons">
-                    <a href="wallet.html" class="btn btn-primary"><i class="fas fa-rocket"></i> Launch Testnet</a>
-                    <a href="#developer-portal" class="btn btn-secondary"><i class="fas fa-code"></i> Start Building</a>
-                </div>
+        <section id="token-section">
+            <h2>OWami Token (OWA)</h2>
+            <div class="card">
+                <h3>Token Information</h3>
+                <button onclick="loadTokenInfo()">Load Token Info</button>
+                <div id="token-info" class="result"></div>
+            </div>
+
+            <div class="card">
+                <h3>Check Balance</h3>
+                <input type="text" id="balance-address" placeholder="Enter address (0x...)" />
+                <button onclick="checkBalance()">Check Balance</button>
+                <div id="balance-result" class="result"></div>
+            </div>
+
+            <div class="card">
+                <h3>Transfer Tokens</h3>
+                <input type="text" id="transfer-from" placeholder="From address" />
+                <input type="text" id="transfer-to" placeholder="To address" />
+                <input type="text" id="transfer-amount" placeholder="Amount" />
+                <button onclick="transferTokens()">Transfer</button>
+                <div id="transfer-result" class="result"></div>
+            </div>
+
+            <div class="card">
+                <h3>Mint Tokens</h3>
+                <input type="text" id="mint-to" placeholder="To address" />
+                <input type="text" id="mint-amount" placeholder="Amount" />
+                <button onclick="mintTokens()">Mint</button>
+                <div id="mint-result" class="result"></div>
+            </div>
+
+            <div class="card">
+                <h3>Recent Transactions</h3>
+                <button onclick="loadTransactions()">Load Transactions</button>
+                <div id="transactions" class="result"></div>
             </div>
         </section>
 
-        <section id="features" class="features-section">
-            <div class="container">
-                <h2 class="section-title">A Platform for Progress</h2>
-                <div class="features-grid">
-                    <div class="feature-card card">
-                        <div class="feature-icon">
-                            <i class="fas fa-shield-alt"></i>
-                        </div>
-                        <h3>Institutional Grade</h3>
-                        <p>Robust security and compliance features for financial institutions and government agencies.</p>
-                    </div>
-                    <div class="feature-card card">
-                        <div class="feature-icon">
-                            <i class="fas fa-bolt"></i>
-                        </div>
-                        <h3>High Performance</h3>
-                        <p>Scalable and efficient, capable of handling high-volume transactions with low fees.</p>
-                    </div>
-                    <div class="feature-card card">
-                        <div class="feature-icon">
-                            <i class="fas fa-users-cog"></i>
-                        </div>
-                        <h3>Developer Centric</h3>
-                        <p>Comprehensive tools, clear documentation, and a supportive ecosystem for builders.</p>
-                    </div>
-                </div>
+        <section id="dapp-section">
+            <h2>DApp Deployment</h2>
+            <div class="card">
+                <h3>Deploy DApp</h3>
+                <input type="text" id="dapp-name" placeholder="DApp Name" />
+                <input type="text" id="dapp-address" placeholder="Contract Address" />
+                <button onclick="deployDApp()">Deploy DApp</button>
+                <div id="deploy-result" class="result"></div>
             </div>
-        </section>
 
-        <section id="use-cases" class="use-cases-section">
-            <div class="container">
-                <h2 class="section-title">Powering the Digital Economy</h2>
-                <div class="use-case-grid">
-                    <div class="use-case-card card">
-                        <h4>Central Bank Digital Currencies (CBDCs)</h4>
-                        <p>Providing a secure sandbox for governments to explore and test digital currency initiatives.</p>
-                    </div>
-                    <div class="use-case-card card">
-                        <h4>Cross-Border Payments</h4>
-                        <p>Facilitating faster, cheaper, and more transparent international transactions.</p>
-                    </div>
-                    <div class="use-case-card card">
-                        <h4>Supply Chain Management</h4>
-                        <p>Enhancing transparency and traceability for goods and services across the continent.</p>
-                    </div>
-                </div>
-            </div>
-        </section>
-
-        <section id="developer-portal" class="developer-portal-section">
-            <div class="container">
-                <h2 class="section-title">Ready to Build on Owami?</h2>
-                <p class="section-subtitle">Access our comprehensive API documentation, tutorials, and community channels to start your journey.</p>
-                <div class="developer-actions">
-                    <a href="api-docs.html" class="btn btn-primary" target="_blank"><i class="fas fa-book-open"></i> Explore the Docs</a>
-                    <a href="dapp.html" class="btn btn-secondary"><i class="fas fa-file-contract"></i> Deploy DApps</a>
-                </div>
+            <div class="card">
+                <h3>Your DApps</h3>
+                <input type="text" id="user-address" placeholder="Your address" />
+                <button onclick="loadUserDApps()">Load My DApps</button>
+                <div id="user-dapps" class="result"></div>
             </div>
         </section>
     </main>
 
-    <footer class="app-footer">
-        <div class="container">
-            <div class="footer-content">
-                <div class="footer-logo-container">
-                    <img src="../marketing/crypto_portions_logo_alt.svg" alt="Owami Network Icon" class="footer-logo">
-                </div>
-                <div class="footer-info">
-                    <p>&copy; 2025 Owami Network. All Rights Reserved.</p>
-                    <div class="footer-links">
-                        <a href="https://github.com/owami-network" target="_blank"><i class="fab fa-github"></i></a>
-                        <a href="https://twitter.com/owami-network" target="_blank"><i class="fab fa-twitter"></i></a>
-                        <a href="mailto:contact@owaminetwork.com"><i class="fas fa-envelope"></i></a>
-                    </div>
-                </div>
-            </div>
-        </div>
+    <footer>
+        <p>OWami Network Simplified Testnet - Built with Rust, Axum, and PostgreSQL</p>
     </footer>
 
-    <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-    <script src="js/app.js" defer></script>
+    <script src="js/owa-token.js"></script>
+    <script src="js/dapp.js"></script>
+    <script src="js/app.js"></script>
 </body>
 </html>

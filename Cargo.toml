@@ -1,40 +1,41 @@
 [package]
-name = "owami-network-simplified"
+name = "owami-network"
 version = "0.1.0"
 edition = "2021"
 
-[lib]
-name = "owami_network_simplified"
-path = "src/lib_simplified.rs"
-
 [dependencies]
-actix-web = "4.10.2"
-actix-rt = "2.10.0"
-actix-cors = "0.7.1"
-actix-files = "0.6.2"
-actix-multipart = "0.4"
-sanitize-filename = "0.4"
-serde = { version = "1.0", features = ["derive"] }
-anyhow = "1.0"
-blake3 = "1.8.1"
-chrono = { version = "0.4", features = ["serde"] }
-dotenv = "0.15"
-ed25519-dalek = "2.1.1"
-env_logger = "0.10"
-hex = "0.4"
-lazy_static = "1.4"
-log = "0.4"
+# Core blockchain
+ed25519-dalek = "2.1"
+blake3 = "1.5"
 rand = "0.8"
-rand_core = { version = "0.6", features = ["std"] }
+hex = "0.4"
+serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-tokio = { version = "1.44.2", features = ["full", "sync"] }
-uuid = { version = "1.0", features = ["v4", "serde"] }
-rayon = "1.7"
-parking_lot = "0.12"
-futures = "0.3"
-wasmtime = "25.0"
-wat = "1.0"
+chrono = { version = "0.4", features = ["serde"] }
 
-[[bin]]
-name = "owami-network-simplified"
-path = "src/main_simplified.rs"
+# Web server
+axum = "0.7"
+tokio = { version = "1.0", features = ["full"] }
+tower = "0.4"
+tower-http = { version = "0.5", features = ["cors", "fs"] }
+
+# Database
+sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "postgres", "sqlite", "uuid", "chrono"] }
+uuid = { version = "1.0", features = ["v4", "serde"] }
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", features = ["env-filter"] }
+anyhow = "1.0"
+
+# WASM (disabled temporarily for MVP)
+# wasmtime = "20.0"
+# wasmer = "4.2"
+
+[dev-dependencies]
+tokio-test = "0.4"
+
+[profile.release]
+opt-level = 3
+lto = true
+codegen-units = 1

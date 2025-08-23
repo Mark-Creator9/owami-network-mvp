@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>OWami Token Testnet DApp</title>
+    <link rel="stylesheet" href="css/style.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-container">
+            <h1>OWami Token Testnet</h1>
+            <div class="nav-links">
+                <a href="index.html">Home</a>
+                <a href="dapp.html">DApp</a>
+                <a href="wallet.html">Wallet</a>
+                <a href="token-dapp.html" class="active">Token</a>
+            </div>
+        </div>
+    </nav>
+
+    <main class="container">
+        <section class="hero">
+            <h2>OWami Token Testnet Interface</h2>
+            <p>Interact with the OWami token on our testnet</p>
+        </section>
+
+        <div class="grid">
+            <!-- Token Info -->
+            <div class="card">
+                <h3>Token Information</h3>
+                <div id="token-info">
+                    <p><strong>Name:</strong> <span id="token-name">Loading...</span></p>
+                    <p><strong>Symbol:</strong> <span id="token-symbol">Loading...</span></p>
+                    <p><strong>Decimals:</strong> <span id="token-decimals">Loading...</span></p>
+                    <p><strong>Total Supply:</strong> <span id="token-supply">Loading...</span></p>
+                    <p><strong>Address:</strong> <span id="token-address">Loading...</span></p>
+                </div>
+                <button onclick="loadTokenInfo()" class="btn">Refresh</button>
+            </div>
+
+            <!-- Balance Checker -->
+            <div class="card">
+                <h3>Check Balance</h3>
+                <input type="text" id="balance-address" placeholder="Enter address (0x...)" 
+                       value="0x742d35Cc6634C0532925a3b8D4e6D3b6e8d3e8A0">
+                <button onclick="checkBalance()" class="btn">Check Balance</button>
+                <div id="balance-result" style="margin-top: 10px;"></div>
+            </div>
+
+            <!-- Transfer Tokens -->
+            <div class="card">
+                <h3>Transfer Tokens</h3>
+                <input type="text" id="transfer-from" placeholder="From address" 
+                       value="0x742d35Cc6634C0532925a3b8D4e6D3b6e8d3e8A0">
+                <input type="text" id="transfer-to" placeholder="To address" 
+                       value="0x1234567890123456789012345678901234567890">
+                <input type="number" id="transfer-amount" placeholder="Amount" step="0.01" value="10">
+                <button onclick="transferTokens()" class="btn">Transfer</button>
+                <div id="transfer-result" style="margin-top: 10px;"></div>
+            </div>
+
+            <!-- Mint Tokens -->
+            <div class="card">
+                <h3>Mint Tokens (Testnet)</h3>
+                <input type="text" id="mint-to" placeholder="To address" 
+                       value="0x1234567890123456789012345678901234567890">
+                <input type="number" id="mint-amount" placeholder="Amount" step="0.01" value="100">
+                <button onclick="mintTokens()" class="btn">Mint</button>
+                <div id="mint-result" style="margin-top: 10px;"></div>
+            </div>
+
+            <!-- Approve Tokens -->
+            <div class="card">
+                <h3>Approve Tokens</h3>
+                <input type="text" id="approve-owner" placeholder="Owner address" 
+                       value="0x742d35Cc6634C0532925a3b8D4e6D3b6e8d3e8A0">
+                <input type="text" id="approve-spender" placeholder="Spender address" 
+                       value="0x0987654321098765432109876543210987654321">
+                <input type="number" id="approve-amount" placeholder="Amount" step="0.01" value="50">
+                <button onclick="approveTokens()" class="btn">Approve</button>
+                <div id="approve-result" style="margin-top: 10px;"></div>
+            </div>
+
+            <!-- Transaction History -->
+            <div class="card full-width">
+                <h3>Recent Transactions</h3>
+                <button onclick="loadTransactions()" class="btn">Refresh</button>
+                <div id="transactions-list">
+                    <p>Loading transactions...</p>
+                </div>
+            </div>
+        </div>
+    </main>
+
+    <script src="js/owa-token.js"></script>
+    <script>
+        // Initialize
+        document.addEventListener('DOMContentLoaded', function() {
+            loadTokenInfo();
+            loadTransactions();
+        });
+
+        async function loadTokenInfo() {
+            try {
+                const info = await window.owaToken.getTokenInfo();
+                document.getElementById('token-name').textContent = info.name;
+                document.getElementById('token-symbol').textContent = info.symbol;
+                document.getElementById('token-decimals').textContent = info.decimals;
+                document.getElementById('token-supply').textContent = window.owaToken.formatBalance(info.total_supply);
+                document.getElementById('token-address').textContent = info.address;
+            } catch (error) {
+                console.error('Error loading token info:', error);
+            }
+        }
+
+        async function checkBalance() {
+            const address = document.getElementById('balance-address').value;
+            const resultDiv = document.getElementById('balance-result');
+            
+            try {
+                const balance = await window.owaToken.getBalance(address);
+                resultDiv.innerHTML = `<p><strong>Balance:</strong> ${window.owaToken.formatBalance(balance.balance)} OWA</p>`;
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+
+        async function transferTokens() {
+            const from = document.getElementById('transfer-from').value;
+            const to = document.getElementById('transfer-to').value;
+            const amount = document.getElementById('transfer-amount').value;
+            const resultDiv = document.getElementById('transfer-result');
+            
+            try {
+                const result = await window.owaToken.transfer(from, to, amount);
+                if (result.success) {
+                    resultDiv.innerHTML = `<p style="color: green;">Success! TX: ${result.tx_hash}</p>`;
+                    loadTransactions();
+                } else {
+                    resultDiv.innerHTML = `<p style="color: red;">Error: ${result.message}</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+
+        async function mintTokens() {
+            const to = document.getElementById('mint-to').value;
+            const amount = document.getElementById('mint-amount').value;
+            const resultDiv = document.getElementById('mint-result');
+            
+            try {
+                const result = await window.owaToken.mint(to, amount);
+                if (result.success) {
+                    resultDiv.innerHTML = `<p style="color: green;">Success! TX: ${result.tx_hash}</p>`;
+                    loadTransactions();
+                    loadTokenInfo();
+                } else {
+                    resultDiv.innerHTML = `<p style="color: red;">Error: ${result.message}</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+
+        async function approveTokens() {
+            const owner = document.getElementById('approve-owner').value;
+            const spender = document.getElementById('approve-spender').value;
+            const amount = document.getElementById('approve-amount').value;
+            const resultDiv = document.getElementById('approve-result');
+            
+            try {
+                const result = await window.owaToken.approve(owner, spender, amount);
+                if (result.success) {
+                    resultDiv.innerHTML = `<p style="color: green;">Success! TX: ${result.tx_hash}</p>`;
+                    loadTransactions();
+                } else {
+                    resultDiv.innerHTML = `<p style="color: red;">Error: ${result.message}</p>`;
+                }
+            } catch (error) {
+                resultDiv.innerHTML = `<p style="color: red;">Error: ${error.message}</p>`;
+            }
+        }
+
+        async function loadTransactions() {
+            const listDiv = document.getElementById('transactions-list');
+            
+            try {
+                const transactions = await window.owaToken.getTransactions();
+                if (transactions.length === 0) {
+                    listDiv.innerHTML = '<p>No transactions found</p>';
+                    return;
+                }
+                
+                let html = '<table style="width: 100%; border-collapse: collapse;">';
+                html += '<thead><tr><th>TX Hash</th><th>From</th><th>To</th><th>Amount</th><th>Time</th></tr></thead>';
+                html += '<tbody>';
+                
+                transactions.slice(0, 10).forEach(tx => {
+                    const date = new Date(tx.timestamp * 1000);
+                    html += `<tr>
+                        <td style="font-family: monospace; font-size: 0.8em;">${tx.tx_hash.substring(0, 10)}...</td>
+                        <td style="font-family: monospace; font-size: 0.8em;">${tx.from.substring(0, 10)}...</td>
+                        <td style="font-family: monospace; font-size: 0.8em;">${tx.to.substring(0, 10)}...</td>
+                        <td>${window.owaToken.formatBalance(tx.amount)} OWA</td>
+                        <td>${date.toLocaleString()}</td>
+                    </tr>`;
+                });
+                
+                html += '</tbody></table>';
+                listDiv.innerHTML = html;
+            } catch (error) {
+                listDiv.innerHTML = `<p style="color: red;">Error loading transactions: ${error.message}</p>`;
+            }
+        }
+    </script>
+</body>
+</html>

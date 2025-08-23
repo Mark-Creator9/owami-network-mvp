@@ -1,85 +1,111 @@
-use actix_cors::Cors;
-use std::sync::Mutex;
-use owami_network::vesting::VestingManager;
-use owami_network::db::create_pool;
-use actix_files::Files;
-use actix_web::{web, App, HttpServer, HttpResponse, Responder};
-use owami_network::auth::create_jwt_config;
+use axum::{
+    routing::{get, post},
+    Router,
+    http::Method,
+};
+use tower_http::cors::{Any as CorsAny, CorsLayer};
+use tower_http::services::ServeDir;
+use std::sync::Arc;
+use tokio::sync::Mutex;
+use tracing::{info, error, warn};
+use tracing_subscriber;
 
-/// Health check endpoint
-async fn health_check() -> impl Responder {
-    HttpResponse::Ok().body("Owami Network API v0.1")
-}
+use owami_network::blockchain::Blockchain;
+use owami_network::api::{blockchain as blockchain_api, token as token_api, dapp as dapp_api};
 
-#[cfg(feature = "production")]
-fn setup_logging() {
-    tracing_subscriber::fmt()
-        .with_max_level(tracing::Level::INFO)
-        .init();
-}
+#[tokio::main]
+async fn main() -> Result<(), Box<dyn std::error::Error>> {
+    // Initialize tracing
+    tracing_subscriber::fmt::init();
 
-#[actix_web::main]
-async fn main() -> std::io::Result<()> {
-    println!("Starting Owami Network - Entry Point Reached");
-    #[cfg(feature = "production")]
-    setup_logging();
-    println!("After logging setup");
+    info!("Starting Owami Network Testnet...");
+
+    // Database connection - SQLite for testing
+    let database_url = std::env::var("DATABASE_URL")
+        .unwrap_or_else(|_| "sqlite:owami_testnet.db".to_string());
     
-    let jwt_config = create_jwt_config();
+    info!("Connecting to database: {}", database_url);
+    
+    let pool = sqlx::sqlite::SqlitePoolOptions::new()
+        .max_connections(5)
+        .connect(&database_url)
+        .await
+        .unwrap_or_else(|e| {
+            error!("Failed to connect to database: {}", e);
+            panic!("Database connection required for operation");
+        });
+    
+    // Run migrations
+    if let Err(e) = sqlx::migrate!("./migrations").run(&pool).await {
+        warn!("Migration failed: {}. This is expected for some database types.", e);
+    } else {
+        info!("Database migrations completed successfully");
+    }
 
-    // Initialize VestingManager
-    let vesting_manager = std::sync::Arc::new(Mutex::new(VestingManager::default()));
+    // Initialize blockchain
+    let validator_key = owami_network::crypto_utils::default_signing_key();
+    let blockchain = Arc::new(Mutex::new(Blockchain::new(&validator_key)));
 
-    // Initialize Postgres pool
-    let database_url = std::env::var("DATABASE_URL").unwrap_or_else(|_| "postgres://postgres:owamitest@localhost:5432/owami-network".to_string());
-    let db_pool = create_pool(&database_url).await.expect("Failed to create database pool");
+    // Setup CORS
+    let cors = CorsLayer::new()
+        .allow_origin(CorsAny)
+        .allow_methods([Method::GET, Method::POST, Method::PUT, Method::DELETE])
+        .allow_headers(CorsAny);
 
-    log::info!("Starting Owami Network server");
+    // Build our application with routes
+    let blockchain_routes = Router::new()
+        // Blockchain routes
+        .route("/api/blockchain/info", get(blockchain_api::get_info))
+        .route("/api/blockchain/blocks", get(blockchain_api::get_blocks))
+        .route("/api/blockchain/mine", post(blockchain_api::mine_block))
+        // Token routes
+        .route("/api/token/info", get(token_api::get_token_info))
+        .route("/api/token/balance/:address", get(token_api::get_balance))
+        .route("/api/token/transfer", post(token_api::transfer))
+        .route("/api/token/mint/:address", post(token_api::mint))
+        .route("/api/token/mint", post(token_api::mint_tokens))
+        .route("/api/token/transactions", get(token_api::get_transactions))
+        .with_state(blockchain);
+    
+    let dapp_routes = Router::new()
+        // DApp management routes
+        .route("/api/dapps", get(dapp_api::list_dapps))
+        .route("/api/dapps", post(dapp_api::create_dapp))
+        .route("/api/dapps/:id", get(dapp_api::get_dapp))
+        // Legacy deploy/call routes
+        .route("/api/deploy", post(dapp_api::deploy_contract))
+        .route("/api/call", post(dapp_api::call_contract))
+        .with_state(pool);
 
-    println!("Creating HttpServer...");
-    let _server = HttpServer::new(move || {
-        println!("Creating App instance...");
-        let batch_processor = web::Data::new(owami_network::api::BatchProcessor::new());
-        let db_pool_data = web::Data::new(db_pool.clone());
-        App::new()
-            .app_data(db_pool_data)
-            .service(
-                Files::new("/", "./landing")
-                    .index_file("index.html")
-                    .prefer_utf8(true)
-                    .show_files_listing()
-            )
-            .service(
-                web::resource("/").to(|| async {
-                    actix_web::HttpResponse::Ok()
-                        .content_type("text/html")
-                        .body(include_str!("../landing/index.html"))
-                })
-            )
-            .app_data(web::Data::new(jwt_config.clone()))
-            .app_data(web::Data::from(vesting_manager.clone()))
-            .wrap(
-                Cors::default()
-                    .allow_any_origin()
-                    .allow_any_method()
-                    .allow_any_header()
-                    .max_age(3600)
-                    .allowed_methods(vec!["GET", "POST", "OPTIONS"])
-                    .allowed_headers(vec!["content-type", "authorization", "accept"])
-                    .expose_headers(vec!["content-disposition"])
-            )
-            .route("/", web::get().to(health_check))
-            .service(
-                web::scope("/api")
-                    .configure(|cfg| owami_network::api::config(cfg, batch_processor.clone()))
-            )
-            .service(Files::new("/", "./")
-                .index_file("landing/index.html")
-                .prefer_utf8(true))
-    })
-    .bind(("0.0.0.0", 8081))?
-    .workers(4)
-    .run()
-    .await;
+    // Health check endpoint
+    let health_routes = Router::new()
+        .route("/api/health", get(|| async {
+            axum::Json(serde_json::json!({
+                "status": "healthy",
+                "network": "owami-testnet",
+                "token": "0x742d35Cc6634C0532925a3b8D4e6D3b6e8d3e8A0"
+            }))
+        }));
+    
+    let app = blockchain_routes
+        .merge(dapp_routes)
+        .merge(health_routes)
+        // Serve static files from landing directory
+        .nest_service("/landing", ServeDir::new("landing"))
+        .nest_service("/", ServeDir::new("landing"))
+        .layer(cors);
+
+    // Get port from environment variable
+    let port = std::env::var("PORT")
+        .ok()
+        .and_then(|p| p.parse().ok())
+        .unwrap_or(3000);
+
+    // Run the server
+    let listener = tokio::net::TcpListener::bind(format!("0.0.0.0:{}", port)).await?;
+    info!("Server listening on http://0.0.0.0:{}", port);
+    
+    axum::serve(listener, app).await?;
+
     Ok(())
 }

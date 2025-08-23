@@ -1,188 +1,149 @@
-# Owami Network
+# OWami Network Simplified
 
-A Layer 0 blockchain ecosystem tailored to develop the economic landscape of Africa through decentralized solutions.
+A simplified version of the OWami Network blockchain platform, focusing on core token and DApp functionality with a clean REST API.
 
-## Overview
-
-Owami Network is a blockchain infrastructure designed specifically to address the economic challenges and opportunities in Africa. By leveraging blockchain technology with unique accessibility features such as USSD integration, Owami Network enables financial inclusion for all Africans, including those in remote areas without smartphones or internet access.
-
-## Vision
-
-Our vision is to create a decentralized ecosystem that empowers African economies through accessible blockchain solutions, enabling the development and deployment of dApps such as:
-
-- Decentralized Autonomous Organizations (DAOs)
-- Decentralized Exchanges (DEXs)
-- Local Cryptocurrencies
-- Supply Chain Management Solutions
-- Investment Fund DAOs
-- Microfinance Platforms
-- Agricultural Marketplaces
-- Decentralized AI Agents
-
-## Technical Architecture
-
-Owami Network is built as a Layer 0 blockchain with several key components:
-
-### Core Components
-
-- **Consensus Mechanism:** A hybrid approach combining Federated Byzantine Agreement (FBA), Delegated Proof of Stake (DPoS), and Proof of Authority (PoA) for efficient and secure validation.
-- **Blake3 Hashing:** Utilizing the latest version of Blake3 for high-performance cryptographic operations.
-- **P2P Network Layer:** Built on libp2p for robust peer-to-peer communication.
-- **Token System:** Owa TestToken (for testnet) and Owa Token (for mainnet) used as the utility token for the network.
-- **USSD Integration:** SMS-based access to blockchain features, enabling users with basic phones to participate in the network.
-- **Storage Layer:** Efficient blockchain data storage with sled database.
-- **Transaction System:** Support for various transaction types including token transfers and USSD commands.
-
-### Technical Stack
-
-- Language: Rust for performance, safety, and reliability
-- Networking: libp2p for P2P communication
-- Cryptography: ed25519-dalek for signatures, Blake3 for hashing
-- Storage: sled for efficient database operations
-- Serialization: serde and bincode for data serialization
-
-### Architecture Overview
-
-The Owami Network consists of two main components:
-
-- **Node Application:** The core blockchain node with USSD API
-- **CLI Tool:** Command line interface for interacting with the node
-
-## Current Build Details
-
-- **Node Application:** Implemented in Rust, providing REST API endpoints for wallet creation, balance retrieval, faucet requests, transaction sending, and transaction history.
-- **API Server:** Uses Actix-web framework with CORS enabled and JWT authentication.
-- **Batch Processing:** Transactions are batched asynchronously for efficient processing.
-- **Testing:** Comprehensive unit and integration tests covering blockchain, token, and API functionality.
-- **Performance:** Current testnet supports ~2.7 TPS sequentially, with optimizations for concurrency and batching.
-
-## Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
+- **Rust** (latest stable)
+- **PostgreSQL** (12+)
+- **PowerShell** (for Windows scripts)
 
-- Rust 1.53.0 or higher
-- Cargo package manager
-- A C compiler (e.g., GCC or Clang) for building certain dependencies
+### One-Command Launch
 
-### Installation and Running
-
-#### Installing a C Compiler
-To install a C compiler, follow these steps:
-
-1. For Windows:
-   - Download and install [Build Tools for Visual Studio](https://visualstudio.microsoft.com/downloads/).
-   - Make sure to select a Free Download for Community "C++ build tools" during installation.
-
-2. For macOS (using Homebrew):
-   - Run: `brew install gcc`
-
-3. For Linux (Ubuntu/Debian-based):
-   - Run: `sudo apt-get update && sudo apt-get install build-essential`
-
-After installing a C compiler, verify it's correctly installed by running:
-```bash
-gcc --version
-```
-or
-```bash
-clang --version
+```powershell
+.\launch_testnet.ps1
 ```
 
-1. Clone the repository and navigate into it:
-    ```bash
-    git clone https://github.com/Mark-Creator9/owami-network
-    cd owami-network
-    ```
+This script will:
+- ✅ Check PostgreSQL status
+- ✅ Create database `owami_testnet`
+- ✅ Run migrations
+- ✅ Build the project
+- ✅ Start the server on http://localhost:3000
 
-2. Build and run the project:
-    ```bash
-    cargo run
-    ```
+### Manual Setup
 
-3. Access the API endpoint at [http://localhost:8080/](http://localhost:8080/) and the landing page at [http://localhost:8080/landing/index.html](http://localhost:8080/landing/index.html).
+1. **Install dependencies:**
+```bash
+cargo build --release
+```
 
-4. (Optional) To use the CLI tool, navigate to the CLI directory and run:
-    ```bash
-    cd owami-cli
-    cargo run -- --help
-    ```
+2. **Set up database:**
+```bash
+createdb owami_testnet
+export DATABASE_URL="postgres://postgres:postgres@localhost/owami_testnet"
+```
 
-## Usage Guide
+3. **Run migrations:**
+```bash
+sqlx migrate run
+```
 
-### Node Operation
+4. **Start the server:**
+```bash
+cargo run --bin owami-network-simplified
+```
 
-- Nodes discover peers via mDNS.
-- Validators are auto-registered with initial stake on testnet.
-- USSD commands supported:
-  - Check Balance: `*144*1#`
-  - Send Payment: `*144*2#`
-  - Receive Payment: `*144*3#`
-  - Help Menu: `*144*0#`
+## 📡 API Endpoints
 
-### Token Operations
+### Token API
+- `GET /api/token/info` - Get token information
+- `GET /api/token/balance/:address` - Get balance for address
+- `POST /api/token/transfer` - Transfer tokens
+- `POST /api/token/mint` - Mint new tokens
+- `POST /api/token/approve` - Approve spender
+- `GET /api/token/transactions` - Get transaction history
 
-- Token transfers via wallet address or phone number.
-- Payment requests via generated codes.
+### DApp API
+- `POST /api/dapp` - Create new DApp
+- `GET /api/dapp/user/:address` - Get user's DApps
+- `GET /api/dapp/:id` - Get specific DApp
+- `POST /api/dapp/:id/state` - Update DApp state
+- `GET /api/dapp/:id/state/:key` - Get DApp state value
 
-### Running Test Scripts
+### Frontend
+- `GET /landing` - Web-based frontend interface
 
-To run the test scripts:
+## 🧪 Testing
 
-1. Start the server using `cargo run`.
-2. In a new terminal, run `powershell ./test_all_scenarios.ps1` to test all scenarios.
-3. Alternatively, run `powershell ./test_alice_bob.ps1` to test the scenario between Alice and Bob.
+Run the comprehensive API test suite:
 
-These scripts will test the API endpoints and provide output for the various test cases.
+```powershell
+.\test_api_endpoints.ps1
+```
 
-## Deployment on Render
+## 📊 Database Schema
 
-### Prerequisites
-1. A Render account
-2. PostgreSQL database instance on Render
+### Tables
+- `token_balances` - Token balances by address
+- `token_transactions` - All token transfers
+- `token_approvals` - Token spending approvals
+- `dapps` - Registered DApps
+- `dapp_states` - DApp state storage
 
-### Setting up PostgreSQL on Render
-1. Create a new PostgreSQL database in your Render dashboard
-2. Note down the following connection details:
-   - Internal Database URL
-   - External Database URL
-   - User
-   - Password
-   - Host
-   - Port
-   - Database name
+## 🔧 Configuration
 
-### Deploying the Application
-1. Create a new Web Service in Render
-2. Connect your repository
-3. Choose "Docker" as the environment
-4. Set the following environment variables:
-   - `POSTGRES_USER`: Database user from Render PostgreSQL
-   - `POSTGRES_PASSWORD`: Database password
-   - `POSTGRES_HOST`: Database host
-   - `POSTGRES_PORT`: Database port (usually 5432)
-   - `POSTGRES_DATABASE`: Database name
-   - `JWT_SECRET`: Your secure JWT secret
-   - `RUST_LOG`: Set to "info" for production logging
-   - `PORT`: Set to 8000
+### Environment Variables
+- `DATABASE_URL` - PostgreSQL connection string
+- `PORT` - Server port (default: 3000)
 
-### Post-Deployment
-1. The application will automatically:
-   - Install required dependencies
-   - Run database migrations
-   - Build and start the Rust application
-2. Monitor the deployment logs to ensure successful startup
-3. Your API will be available at your Render service URL
+### Example `.env` file:
+```bash
+DATABASE_URL=postgres://user:password@localhost/owami_testnet
+PORT=3000
+```
 
-## Development Roadmap
+## 🏗️ Development
 
-- **Current:** MVP Testnet with core blockchain, USSD integration.
-- **Next:** Enhanced testnet with improved consensus, SDK, and dApp ecosystem.
-- **Future:** Mainnet launch with ICO, governance, cross-chain bridges, and full dApp marketplace.
+### Project Structure
+```
+owami-network/
+├── src/
+│   ├── api_simplified/    # REST API endpoints
+│   ├── models.rs          # Database models
+│   └── main.rs           # Server entry point
+├── migrations/           # Database migrations
+├── landing/             # Web frontend
+├── wasm_examples/       # WebAssembly examples
+└── scripts/            # Utility scripts
+```
 
-## Contributing
+### Adding New Features
+1. Add database migration in `migrations/`
+2. Create model in `src/models.rs`
+3. Add API endpoints in `src/api_simplified/`
+4. Update routes in `src/main.rs`
 
-We welcome contributions! Please fork the repository, create a feature branch, commit your changes, and open a pull request.
+## 🌐 Frontend Usage
 
-Owami Network - Empowering Africa's Economic Future Through Decentralized Solutions
+The included frontend provides:
+- **Token Dashboard** - View balances and transactions
+- **DApp Explorer** - Browse and interact with DApps
+- **Developer Tools** - Test API endpoints
+- **Real-time Updates** - Live balance and transaction updates
 
-Note: This is a private repository. Contributions are welcome, but access must be granted by the repository owner.
+Access at: http://localhost:3000/landing
+
+## 🔒 Security Notes
+
+- This is a **testnet** implementation for development
+- No real funds or production data
+- CORS is enabled for development
+- Authentication is simplified for testing
+
+## 📞 Support
+
+For issues or questions:
+1. Check the logs in the terminal
+2. Verify PostgreSQL is running
+3. Ensure all dependencies are installed
+4. Run the test suite to verify setup
+
+## 🎯 Next Steps
+
+- [ ] Add WebAssembly smart contract support
+- [ ] Implement proper authentication
+- [ ] Add WebSocket support for real-time updates
+- [ ] Create mobile wallet app
+- [ ] Add multi-token support
