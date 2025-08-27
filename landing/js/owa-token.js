@@ -1,123 +1,132 @@
-class OWamiToken {
-    constructor(apiBaseUrl) {
-        this.apiBaseUrl = apiBaseUrl;
+// Owami Token JavaScript SDK
+class OwamiToken {
+    constructor(baseUrl = 'http://127.0.0.1:8080') {
+        this.baseUrl = baseUrl;
     }
 
     async getTokenInfo() {
-        const response = await fetch(`${this.apiBaseUrl}/api/token/info`);
+        const response = await fetch(`${this.baseUrl}/api/token/info`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        return response.json();
+        return await response.json();
     }
 
     async getBalance(address) {
-        const response = await fetch(`${this.apiBaseUrl}/api/token/balance/${address}`);
+        const response = await fetch(`${this.baseUrl}/api/wallets/${address}/balance`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        return response.json();
+        return await response.json();
     }
 
     async transfer(from, to, amount) {
-        const response = await fetch(`${this.apiBaseUrl}/api/token/transfer`, {
+        const response = await fetch(`${this.baseUrl}/api/transactions`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                from,
-                to,
-                amount: parseInt(amount),
-                private_key: "default" // In production, this should be handled securely
-            }),
+            body: JSON.stringify({ from, to, amount }),
         });
-        
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        return response.json();
+        return await response.json();
     }
 
     async mint(to, amount) {
-        const response = await fetch(`${this.apiBaseUrl}/api/token/mint`, {
+        const response = await fetch(`${this.baseUrl}/api/faucet`, {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
             },
-            body: JSON.stringify({
-                to,
-                amount: parseInt(amount)
-            }),
+            body: JSON.stringify({ address: to, amount }),
         });
-        
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        return response.json();
+        return await response.json();
     }
 
-    async getTransactions() {
-        const response = await fetch(`${this.apiBaseUrl}/api/token/transactions`);
+    async getTransactions(address) {
+        const response = await fetch(`${this.baseUrl}/api/wallets/${address}/transactions`);
         if (!response.ok) {
             throw new Error(`HTTP error! status: ${response.status}`);
         }
-        return response.json();
+        return await response.json();
     }
 
-    // Additional utility methods for the frontend
-    formatBalance(balance) {
-        // Convert from wei to tokens (assuming 18 decimals)
-        return (balance / Math.pow(10, 18)).toFixed(4);
-    }
-
-    formatAmount(amount) {
-        return new Intl.NumberFormat().format(amount);
-    }
-
-    truncateAddress(address) {
-        if (!address || address.length < 10) return address;
-        return `${address.slice(0, 6)}...${address.slice(-4)}`;
-    }
-
-    // Blockchain API methods
-    async getBlockchainInfo() {
-        const response = await fetch(`${this.apiBaseUrl}/api/blockchain/info`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    }
-
-    async getBlocks() {
-        const response = await fetch(`${this.apiBaseUrl}/api/blockchain/blocks`);
-        if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
-        }
-        return response.json();
-    }
-
-    async mineBlock() {
-        const response = await fetch(`${this.apiBaseUrl}/api/blockchain/mine`, {
+    // Vesting functionality
+    async createVestingSchedule(beneficiary, amount, duration, cliff) {
+        const response = await fetch(`${this.baseUrl}/api/vesting/create`, {
             method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ beneficiary, amount, duration, cliff }),
         });
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error(`Vesting creation failed! status: ${response.status}`);
         }
-        return response.json();
+        return await response.json();
     }
 
-    // Health check
-    async getHealth() {
-        const response = await fetch(`${this.apiBaseUrl}/api/health`);
+    async getClaimableAmount(beneficiary) {
+        const response = await fetch(`${this.baseUrl}/api/vesting/claimable`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ beneficiary }),
+        });
         if (!response.ok) {
-            throw new Error(`HTTP error! status: ${response.status}`);
+            throw new Error(`Failed to get claimable amount! status: ${response.status}`);
         }
-        return response.json();
+        return await response.json();
+    }
+
+    async claimTokens(beneficiary) {
+        const response = await fetch(`${this.baseUrl}/api/vesting/claim`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ beneficiary }),
+        });
+        if (!response.ok) {
+            throw new Error(`Claim failed! status: ${response.status}`);
+        }
+        return await response.json();
+    }
+
+    /**
+     * Deploy smart contract to Owami Network
+     * @param {string} owner - Deployer's wallet address
+     * @param {string} contractCode - Compiled contract bytecode
+     * @param {number} gasLimit - Gas limit for deployment
+     * @returns {Promise} Deployment transaction result
+     */
+    async deployContract(owner, contractCode, gasLimit) {
+        const response = await fetch(`${this.baseUrl}/api/deploy`, {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({ owner, contractCode, gasLimit }),
+        });
+        if (!response.ok) {
+            throw new Error(`Deployment failed! status: ${response.status}`);
+        }
+        return await response.json();
     }
 }
 
-// Create global instance for backward compatibility
+// Example usage
 if (typeof window !== 'undefined') {
-    window.owaToken = new OWamiToken(window.location.origin);
+    window.OwamiToken = OwamiToken;
+}
+
+// Export for Node.js
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = OwamiToken;
 }

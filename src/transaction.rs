@@ -89,13 +89,10 @@ impl Transaction {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ed25519_dalek::SigningKey;
-    use rand::rngs::OsRng;
 
     #[test]
     fn test_transaction_creation() {
-        let signing_key = crypto_utils::generate_keypair();
-        let public_key = signing_key.verifying_key();
+        let (signing_key, public_key) = crypto_utils::generate_keypair();
         
         let from = hex::encode(public_key.to_bytes());
         let to = "recipient_address".to_string();

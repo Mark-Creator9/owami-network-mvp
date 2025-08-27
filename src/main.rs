@@ -6,6 +6,7 @@ use axum::{
 use tower_http::cors::{Any as CorsAny, CorsLayer};
 use tower_http::services::ServeDir;
 use std::sync::Arc;
+use std::str::FromStr;
 use tokio::sync::Mutex;
 use tracing::{info, error, warn};
 use tracing_subscriber;
@@ -26,9 +27,13 @@ async fn main() -> Result<(), Box<dyn std::error::Error>> {
     
     info!("Connecting to database: {}", database_url);
     
+    // Create SQLite connection with create_if_missing option
     let pool = sqlx::sqlite::SqlitePoolOptions::new()
         .max_connections(5)
-        .connect(&database_url)
+        .connect_with(
+            sqlx::sqlite::SqliteConnectOptions::from_str(&database_url)?
+                .create_if_missing(true)
+        )
         .await
         .unwrap_or_else(|e| {
             error!("Failed to connect to database: {}", e);

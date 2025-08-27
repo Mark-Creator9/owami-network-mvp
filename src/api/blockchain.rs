@@ -106,7 +106,6 @@ pub async fn mine_block(
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ed25519_dalek::SigningKey;
     use crate::transaction::Transaction;
 
     async fn setup_blockchain() -> Arc<Mutex<Blockchain>> {

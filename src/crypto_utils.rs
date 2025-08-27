@@ -1,45 +1,57 @@
 use ed25519_dalek::{SigningKey, VerifyingKey, Signature, Signer, Verifier};
 use rand::rngs::OsRng;
-use rand::RngCore;
 
-pub fn generate_keypair() -> SigningKey {
-    // Use the from_bytes method with random bytes
-    let mut rng = OsRng;
-    let mut secret_bytes = [0u8; 32];
-    RngCore::fill_bytes(&mut rng, &mut secret_bytes);
-    SigningKey::from_bytes(&secret_bytes.into())
-}
-
-pub fn signing_key_from_bytes(bytes: &[u8; 32]) -> Result<SigningKey, ed25519_dalek::SignatureError> {
-    Ok(SigningKey::from_bytes(bytes.into()))
-}
-
+/// Generate a default signing key for testing
 pub fn default_signing_key() -> SigningKey {
-    // Create a deterministic key for testing
-    let secret_bytes: [u8; 32] = [
-        1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16,
-        17, 18, 19, 20, 21, 22, 23, 24, 25, 26, 27, 28, 29, 30, 31, 32
-    ];
-    SigningKey::from_bytes(&secret_bytes.into())
+    let mut rng = OsRng;
+    SigningKey::generate(&mut rng)
 }
 
+/// Generate a keypair (signing key and verifying key)
+pub fn generate_keypair() -> (SigningKey, VerifyingKey) {
+    let mut rng = OsRng;
+    let signing_key = SigningKey::generate(&mut rng);
+    let verifying_key = signing_key.verifying_key();
+    (signing_key, verifying_key)
+}
+
+/// Get the verifying key from a signing key
+pub fn get_verifying_key(signing_key: &SigningKey) -> VerifyingKey {
+    signing_key.verifying_key()
+}
+
+/// Convert a signing key to a hex string
+pub fn signing_key_to_hex(signing_key: &SigningKey) -> String {
+    hex::encode(signing_key.to_bytes())
+}
+
+/// Convert a hex string to a signing key
+pub fn hex_to_signing_key(hex_str: &str) -> Result<SigningKey, String> {
+    let bytes = hex::decode(hex_str).map_err(|e| e.to_string())?;
+    if bytes.len() != 32 {
+        return Err("Invalid key length".to_string());
+    }
+    let mut key_bytes = [0u8; 32];
+    key_bytes.copy_from_slice(&bytes);
+    Ok(SigningKey::from_bytes(&key_bytes))
+}
+
+/// Sign a message with a signing key
 pub fn sign_message(signing_key: &SigningKey, message: &[u8]) -> Signature {
     signing_key.sign(message)
 }
 
-pub fn verify_signature(verifying_key: &VerifyingKey, message: &[u8], signature: &Signature) -> bool {
-    verifying_key.verify(message, signature).is_ok()
-}
-
+/// Convert a signature to bytes
 pub fn signature_to_bytes(signature: &Signature) -> Vec<u8> {
     signature.to_bytes().to_vec()
 }
 
-pub fn signature_from_bytes(bytes: &[u8]) -> Result<Signature, ed25519_dalek::SignatureError> {
-    if bytes.len() != 64 {
-        return Err(ed25519_dalek::SignatureError::new());
-    }
-    let mut sig_bytes = [0u8; 64];
-    sig_bytes.copy_from_slice(bytes);
-    Ok(Signature::from_bytes(&sig_bytes))
+/// Convert bytes to a signature
+pub fn signature_from_bytes(bytes: &[u8]) -> Result<Signature, String> {
+    Signature::try_from(bytes).map_err(|e| e.to_string())
+}
+
+/// Verify a signature
+pub fn verify_signature(public_key: &VerifyingKey, message: &[u8], signature: &Signature) -> bool {
+    public_key.verify(message, signature).is_ok()
 }

@@ -1,151 +1,281 @@
+# Owami Network API Testing Script
+# This script tests all API endpoints comprehensively
+
 param(
-    [string]$BaseUrl = "http://localhost:3000"
+    [string]$BaseUrl = "http://localhost:3000",
+    [switch]$Verbose
 )
 
-# Colors for output
-$Green = "`e[32m"
-$Yellow = "`e[33m"
-$Red = "`e[31m"
-$Reset = "`e[0m"
+Write-Host "🚀 Starting Owami Network API Testing..." -ForegroundColor Green
+Write-Host "Base URL: $BaseUrl" -ForegroundColor Cyan
 
-Write-Host "${Green}🧪 Testing OWami Network API Endpoints${Reset}" -ForegroundColor Green
-Write-Host "======================================"
+# Test Results Storage
+$testResults = @()
+$passedTests = 0
+$failedTests = 0
 
-# Test Health Check
-Write-Host "`n${Yellow}🔍 Testing Health Check...${Reset}" -ForegroundColor Yellow
-
-Write-Host "`n1. GET $BaseUrl/api/health"
-try {
-    $response = Invoke-RestMethod -Uri "$BaseUrl/api/health" -Method Get
-    Write-Host "${Green}✅ Success:${Reset} $($response | ConvertTo-Json -Compress)"
-} catch {
-    Write-Host "${Red}❌ Failed:${Reset} $($_.Exception.Message)"
+# Helper function to test API endpoint
+function Test-Endpoint {
+    param(
+        [string]$Method,
+        [string]$Endpoint,
+        [string]$Description,
+        [hashtable]$Body = $null,
+        [int]$ExpectedStatus = 200
+    )
+    
+    Write-Host "`n🧪 Testing: $Description" -ForegroundColor Yellow
+    Write-Host "   $Method $Endpoint" -ForegroundColor Gray
+    
+    try {
+        $uri = "$BaseUrl$Endpoint"
+        $params = @{
+            Uri = $uri
+            Method = $Method
+            ContentType = "application/json"
+        }
+        
+        if ($Body) {
+            $params.Body = $Body | ConvertTo-Json -Depth 10
+            if ($Verbose) {
+                Write-Host "   Request Body: $($params.Body)" -ForegroundColor DarkGray
+            }
+        }
+        
+        $response = Invoke-RestMethod @params
+        
+        if ($Verbose) {
+            Write-Host "   Response: $($response | ConvertTo-Json -Depth 3)" -ForegroundColor DarkGray
+        }
+        
+        Write-Host "   ✅ PASSED" -ForegroundColor Green
+        $script:passedTests++
+        $script:testResults += @{
+            Test = $Description
+            Status = "PASSED"
+            Endpoint = $Endpoint
+            Method = $Method
+            Response = $response
+        }
+        
+        return $response
+    }
+    catch {
+        Write-Host "   ❌ FAILED: $($_.Exception.Message)" -ForegroundColor Red
+        $script:failedTests++
+        $script:testResults += @{
+            Test = $Description
+            Status = "FAILED"
+            Endpoint = $Endpoint
+            Method = $Method
+            Error = $_.Exception.Message
+        }
+        
+        return $null
+    }
 }
 
-# Test Token API endpoints
-Write-Host "`n${Yellow}🔍 Testing Token API...${Reset}" -ForegroundColor Yellow
+# Wait for server to be ready
+Write-Host "`n⏳ Checking server availability..." -ForegroundColor Cyan
+$maxRetries = 10
+$retryCount = 0
 
-# 1. Get token info
-Write-Host "`n2. GET $BaseUrl/api/token/info"
-try {
-    $response = Invoke-RestMethod -Uri "$BaseUrl/api/token/info" -Method Get
-    Write-Host "${Green}✅ Success:${Reset} $($response | ConvertTo-Json -Compress)"
-} catch {
-    Write-Host "${Red}❌ Failed:${Reset} $($_.Exception.Message)"
-}
+do {
+    try {
+        $response = Invoke-WebRequest -Uri "$BaseUrl/api/token/info" -TimeoutSec 5
+        Write-Host "✅ Server is ready!" -ForegroundColor Green
+        break
+    }
+    catch {
+        $retryCount++
+        if ($retryCount -ge $maxRetries) {
+            Write-Host "❌ Server not responding after $maxRetries attempts" -ForegroundColor Red
+            exit 1
+        }
+        Write-Host "⏳ Attempt $retryCount/$maxRetries - Server not ready, waiting..." -ForegroundColor Yellow
+        Start-Sleep -Seconds 2
+    }
+} while ($retryCount -lt $maxRetries)
 
-# 2. Get balance (test address)
-Write-Host "`n3. GET $BaseUrl/api/token/balance/0x1234567890123456789012345678901234567890"
-try {
-    $response = Invoke-RestMethod -Uri "$BaseUrl/api/token/balance/0x1234567890123456789012345678901234567890" -Method Get
-    Write-Host "${Green}✅ Success:${Reset} $($response | ConvertTo-Json -Compress)"
-} catch {
-    Write-Host "${Red}❌ Failed:${Reset} $($_.Exception.Message)"
-}
+Write-Host "`n🔥 Starting API Endpoint Tests..." -ForegroundColor Magenta
 
-# 3. Mint tokens (new format)
-Write-Host "`n4. POST $BaseUrl/api/token/mint"
+# ============================================================================
+# TOKEN API TESTS
+# ============================================================================
+Write-Host "`n📊 TOKEN API TESTS" -ForegroundColor Blue
+
+# Test 1: Get Token Info
+Test-Endpoint -Method "GET" -Endpoint "/api/token/info" -Description "Get Token Information"
+
+# Test 2: Get Balance for an address
+$testAddress = "0x1234567890123456789012345678901234567890"
+Test-Endpoint -Method "GET" -Endpoint "/api/token/balance/$testAddress" -Description "Get Token Balance"
+
+# Test 3: Test token transactions endpoint
+Test-Endpoint -Method "GET" -Endpoint "/api/token/transactions" -Description "Get Token Transactions"
+
+# Test 4: Test token mint (if enabled)
 $mintBody = @{
-    to = "0x1234567890123456789012345678901234567890"
-    amount = 1000000000000000000
-} | ConvertTo-Json
-try {
-    $response = Invoke-RestMethod -Uri "$BaseUrl/api/token/mint" -Method Post -Body $mintBody -ContentType "application/json"
-    Write-Host "${Green}✅ Success:${Reset} $($response | ConvertTo-Json -Compress)"
-} catch {
-    Write-Host "${Red}❌ Failed:${Reset} $($_.Exception.Message)"
+    to = $testAddress
+    amount = "1000"
 }
+Test-Endpoint -Method "POST" -Endpoint "/api/token/mint" -Description "Mint Tokens" -Body $mintBody
 
-# 4. Transfer tokens
-Write-Host "`n5. POST $BaseUrl/api/token/transfer"
+# Test 5: Test token transfer
 $transferBody = @{
-    from = "0x1234567890123456789012345678901234567890"
-    to = "0x0987654321098765432109876543210987654321"
-    amount = 500000000000000000
-    private_key = "dummy_key"
-} | ConvertTo-Json
-try {
-    $response = Invoke-RestMethod -Uri "$BaseUrl/api/token/transfer" -Method Post -Body $transferBody -ContentType "application/json"
-    Write-Host "${Green}✅ Success:${Reset} $($response | ConvertTo-Json -Compress)"
-} catch {
-    Write-Host "${Red}❌ Failed:${Reset} $($_.Exception.Message)"
+    from = $testAddress
+    to = "0x9876543210987654321098765432109876543210"
+    amount = "100"
 }
+Test-Endpoint -Method "POST" -Endpoint "/api/token/transfer" -Description "Transfer Tokens" -Body $transferBody
 
-# 5. Get transactions
-Write-Host "`n6. GET $BaseUrl/api/token/transactions"
-try {
-    $response = Invoke-RestMethod -Uri "$BaseUrl/api/token/transactions" -Method Get
-    Write-Host "${Green}✅ Success:${Reset} Found $($response.Count) transactions"
-    if ($response.Count -gt 0) {
-        Write-Host "   Latest: $($response[0] | ConvertTo-Json -Compress)"
-    }
-} catch {
-    Write-Host "${Red}❌ Failed:${Reset} $($_.Exception.Message)"
+# Test 6: Test token approve
+$approveBody = @{
+    owner = $testAddress
+    spender = "0x9876543210987654321098765432109876543210"
+    amount = "500"
 }
+Test-Endpoint -Method "POST" -Endpoint "/api/token/approve" -Description "Approve Token Spending" -Body $approveBody
 
-# Test Blockchain API endpoints
-Write-Host "`n${Yellow}🔍 Testing Blockchain API...${Reset}" -ForegroundColor Yellow
+# ============================================================================
+# DAPP API TESTS
+# ============================================================================
+Write-Host "`n🏗️ DAPP API TESTS" -ForegroundColor Blue
 
-# 6. Get blockchain info
-Write-Host "`n7. GET $BaseUrl/api/blockchain/info"
-try {
-    $response = Invoke-RestMethod -Uri "$BaseUrl/api/blockchain/info" -Method Get
-    Write-Host "${Green}✅ Success:${Reset} $($response | ConvertTo-Json -Compress)"
-} catch {
-    Write-Host "${Red}❌ Failed:${Reset} $($_.Exception.Message)"
-}
-
-# 7. Get blocks
-Write-Host "`n8. GET $BaseUrl/api/blockchain/blocks"
-try {
-    $response = Invoke-RestMethod -Uri "$BaseUrl/api/blockchain/blocks" -Method Get
-    Write-Host "${Green}✅ Success:${Reset} Found $($response.Count) blocks"
-    if ($response.Count -gt 0) {
-        Write-Host "   Latest block: $($response[-1] | ConvertTo-Json -Compress)"
-    }
-} catch {
-    Write-Host "${Red}❌ Failed:${Reset} $($_.Exception.Message)"
-}
-
-# Test DApp API endpoints
-Write-Host "`n${Yellow}🔍 Testing DApp API...${Reset}" -ForegroundColor Yellow
-
-# 8. Create DApp
-Write-Host "`n9. POST $BaseUrl/api/dapps"
+# Test 7: Create DApp
 $dappBody = @{
     name = "Test DApp"
-    description = "A test decentralized application"
-    contract_address = "0x1111111111111111111111111111111111111111"
-} | ConvertTo-Json
-try {
-    $response = Invoke-RestMethod -Uri "$BaseUrl/api/dapps" -Method Post -Body $dappBody -ContentType "application/json"
-    Write-Host "${Green}✅ Success:${Reset} $($response | ConvertTo-Json -Compress)"
-    $dappId = $response.data.id
-} catch {
-    Write-Host "${Red}❌ Failed:${Reset} $($_.Exception.Message)"
-    $dappId = "test-id"
+    description = "A test DApp for API testing"
+    contract_address = "0xabcdef1234567890abcdef1234567890abcdef12"
+    creator_id = "550e8400-e29b-41d4-a716-446655440000"
 }
+$createdDapp = Test-Endpoint -Method "POST" -Endpoint "/api/dapp" -Description "Create DApp" -Body $dappBody
 
-# 9. List DApps
-Write-Host "`n10. GET $BaseUrl/api/dapps"
-try {
-    $response = Invoke-RestMethod -Uri "$BaseUrl/api/dapps" -Method Get
-    Write-Host "${Green}✅ Success:${Reset} Found $($response.data.Count) DApps"
-    if ($response.data.Count -gt 0) {
-        Write-Host "   Latest: $($response.data[0] | ConvertTo-Json -Compress)"
+# Test 8: Get user's DApps
+$userId = "550e8400-e29b-41d4-a716-446655440000"
+Test-Endpoint -Method "GET" -Endpoint "/api/dapp/user/$userId" -Description "Get User's DApps"
+
+# Test 9: Get specific DApp (if creation was successful)
+if ($createdDapp -and $createdDapp.id) {
+    Test-Endpoint -Method "GET" -Endpoint "/api/dapp/$($createdDapp.id)" -Description "Get Specific DApp"
+    
+    # Test 10: Update DApp state
+    $stateBody = @{
+        key = "test_key"
+        value = "test_value"
     }
-} catch {
-    Write-Host "${Red}❌ Failed:${Reset} $($_.Exception.Message)"
+    Test-Endpoint -Method "POST" -Endpoint "/api/dapp/$($createdDapp.id)/state" -Description "Update DApp State" -Body $stateBody
+    
+    # Test 11: Get DApp state value
+    Test-Endpoint -Method "GET" -Endpoint "/api/dapp/$($createdDapp.id)/state/test_key" -Description "Get DApp State Value"
 }
 
-# 10. Get specific DApp
-Write-Host "`n11. GET $BaseUrl/api/dapps/$dappId"
+# ============================================================================
+# BLOCKCHAIN API TESTS
+# ============================================================================
+Write-Host "`n⛓️ BLOCKCHAIN API TESTS" -ForegroundColor Blue
+
+# Test 12: Get blockchain info
+Test-Endpoint -Method "GET" -Endpoint "/api/blockchain/info" -Description "Get Blockchain Info"
+
+# Test 13: Get blocks
+Test-Endpoint -Method "GET" -Endpoint "/api/blockchain/blocks" -Description "Get Blockchain Blocks"
+
+# Test 14: Mine a block (if endpoint exists)
+Test-Endpoint -Method "POST" -Endpoint "/api/blockchain/mine" -Description "Mine New Block"
+
+# ============================================================================
+# HEALTH CHECK TESTS
+# ============================================================================
+Write-Host "`n🏥 HEALTH CHECK TESTS" -ForegroundColor Blue
+
+# Test 15: Basic health check (try common health endpoints)
+Test-Endpoint -Method "GET" -Endpoint "/health" -Description "Health Check Endpoint"
+Test-Endpoint -Method "GET" -Endpoint "/api/health" -Description "API Health Check"
+Test-Endpoint -Method "GET" -Endpoint "/status" -Description "Status Endpoint"
+
+# ============================================================================
+# FRONTEND TESTS
+# ============================================================================
+Write-Host "`n🌐 FRONTEND TESTS" -ForegroundColor Blue
+
+# Test 16: Landing page accessibility
+Test-Endpoint -Method "GET" -Endpoint "/landing" -Description "Landing Page Access"
+
+# Test 17: Static file serving (CSS)
+Test-Endpoint -Method "GET" -Endpoint "/landing/css/style.css" -Description "Static CSS File"
+
+# Test 18: Static file serving (JavaScript)
+Test-Endpoint -Method "GET" -Endpoint "/landing/js/app.js" -Description "Static JavaScript File"
+
+# ============================================================================
+# ERROR HANDLING TESTS
+# ============================================================================
+Write-Host "`n⚠️ ERROR HANDLING TESTS" -ForegroundColor Blue
+
+# Test 19: Invalid endpoint
 try {
-    $response = Invoke-RestMethod -Uri "$BaseUrl/api/dapps/$dappId" -Method Get
-    Write-Host "${Green}✅ Success:${Reset} $($response | ConvertTo-Json -Compress)"
-} catch {
-    Write-Host "${Red}❌ Failed:${Reset} $($_.Exception.Message)"
+    Invoke-RestMethod -Uri "$BaseUrl/api/invalid/endpoint" -Method GET
+    Write-Host "   ❌ FAILED: Should have returned 404" -ForegroundColor Red
+    $failedTests++
+}
+catch {
+    if ($_.Exception.Response.StatusCode -eq 404) {
+        Write-Host "   ✅ PASSED: Correctly returned 404 for invalid endpoint" -ForegroundColor Green
+        $passedTests++
+    } else {
+        Write-Host "   ❌ FAILED: Unexpected error: $($_.Exception.Message)" -ForegroundColor Red
+        $failedTests++
+    }
 }
 
-Write-Host "`n${Green}🎉 API testing completed!${Reset}" -ForegroundColor Green
-Write-Host "======================================"
+# Test 20: Invalid JSON body
+try {
+    $invalidBody = "invalid json"
+    Invoke-RestMethod -Uri "$BaseUrl/api/token/transfer" -Method POST -Body $invalidBody -ContentType "application/json"
+    Write-Host "   ❌ FAILED: Should have rejected invalid JSON" -ForegroundColor Red
+    $failedTests++
+}
+catch {
+    Write-Host "   ✅ PASSED: Correctly rejected invalid JSON" -ForegroundColor Green
+    $passedTests++
+}
+
+# ============================================================================
+# TEST SUMMARY
+# ============================================================================
+Write-Host "`n📊 TEST SUMMARY" -ForegroundColor Magenta
+Write-Host "===========================================" -ForegroundColor Magenta
+
+$totalTests = $passedTests + $failedTests
+$successRate = if ($totalTests -gt 0) { [math]::Round(($passedTests / $totalTests) * 100, 2) } else { 0 }
+
+Write-Host "Total Tests: $totalTests" -ForegroundColor Cyan
+Write-Host "Passed: $passedTests" -ForegroundColor Green
+Write-Host "Failed: $failedTests" -ForegroundColor Red
+Write-Host "Success Rate: $successRate%" -ForegroundColor $(if ($successRate -ge 90) { "Green" } elseif ($successRate -ge 70) { "Yellow" } else { "Red" })
+
+if ($failedTests -eq 0) {
+    Write-Host "`n🎉 ALL TESTS PASSED! Owami Network API is fully operational!" -ForegroundColor Green
+} else {
+    Write-Host "`n⚠️ Some tests failed. Please check the detailed results below." -ForegroundColor Yellow
+}
+
+# Detailed Results
+if ($Verbose -or $failedTests -gt 0) {
+    Write-Host "`n📋 DETAILED RESULTS:" -ForegroundColor Cyan
+    foreach ($result in $testResults) {
+        $color = if ($result.Status -eq "PASSED") { "Green" } else { "Red" }
+        Write-Host "[$($result.Status)] $($result.Test)" -ForegroundColor $color
+        if ($result.Error) {
+            Write-Host "   Error: $($result.Error)" -ForegroundColor DarkRed
+        }
+    }
+}
+
+# Export results to JSON
+$resultsFile = "api_test_results.json"
+$testResults | ConvertTo-Json -Depth 10 | Out-File -FilePath $resultsFile -Encoding UTF8
+Write-Host "`n💾 Test results saved to: $resultsFile" -ForegroundColor Cyan
+
+Write-Host "`n🏁 API Testing Complete!" -ForegroundColor Green

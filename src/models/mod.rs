@@ -2,7 +2,8 @@ pub mod user;
 
 use serde::{Deserialize, Serialize};
 use sqlx::FromRow;
-use uuid::Uuid;
+use chrono::DateTime;
+use chrono::Utc;
 
 #[derive(FromRow, Serialize, Deserialize)]
 pub struct TokenBalance {
@@ -17,7 +18,7 @@ pub struct TokenTransaction {
     pub to_address: String,
     pub amount: String,
     pub block_number: i32,
-    pub timestamp: chrono::DateTime<chrono::Utc>,
+    pub timestamp: DateTime<Utc>,
 }
 
 #[derive(FromRow, Serialize, Deserialize)]
@@ -29,12 +30,12 @@ pub struct TokenApproval {
 
 #[derive(FromRow, Serialize, Deserialize)]
 pub struct DApp {
-    pub id: Uuid,
+    pub id: String,
     pub name: String,
     pub description: String,
     pub contract_address: String,
-    pub creator_id: Uuid,
-    pub created_at: chrono::DateTime<chrono::Utc>,
+    pub creator_id: String,
+    pub created_at: DateTime<Utc>,
 }
 
 #[derive(FromRow, Serialize, Deserialize)]
@@ -42,7 +43,7 @@ pub struct DAppState {
     pub dapp_id: String,
     pub key: String,
     pub value: String,
-    pub updated_at: chrono::DateTime<chrono::Utc>,
+    pub updated_at: DateTime<Utc>,
 }
 
 #[derive(Debug, Serialize, Deserialize)]

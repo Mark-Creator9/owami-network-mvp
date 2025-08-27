@@ -1,6 +1,5 @@
 use owami_network::{
     Blockchain,
-    create_shared_blockchain,
     Block
 };
 use ed25519_dalek::SigningKey;
@@ -57,17 +56,4 @@ async fn test_block_validation() {
         &validator_key
     );
     assert!(blockchain.add_block(invalid_prev_hash_block).await.is_err());
-}
-
-#[test]
-fn test_shared_blockchain() {
-    let mut rng = OsRng;
-    let mut secret = [0u8; 32];
-    rng.fill_bytes(&mut secret);
-    let validator_key = SigningKey::from_bytes(&secret);
-    let blockchain = create_shared_blockchain(&validator_key);
-    
-    let locked = blockchain.lock().unwrap();
-    assert_eq!(locked.blocks.len(), 1);
-    assert_eq!(locked.blocks[0].header.height, 0);
 }

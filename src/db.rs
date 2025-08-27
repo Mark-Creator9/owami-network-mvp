@@ -1,10 +1,10 @@
-use sqlx::{Pool, Postgres};
-use sqlx::postgres::PgPoolOptions;
+use sqlx::Pool;
+use sqlx::sqlite::SqlitePoolOptions;
 
-pub type DatabasePool = Pool<Postgres>;
+pub type DatabasePool = Pool<sqlx::Sqlite>;
 
 pub async fn create_pool(database_url: &str) -> Result<DatabasePool, Box<dyn std::error::Error>> {
-    let pool = PgPoolOptions::new()
+    let pool = SqlitePoolOptions::new()
         .max_connections(5)
         .connect(database_url)
         .await?;

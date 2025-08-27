@@ -5,9 +5,9 @@ use axum::{
 };
 use serde::{Deserialize, Serialize};
 use sqlx::{SqlitePool, Row};
-use uuid::Uuid;
 use std::process::Command;
 use std::path::Path as StdPath;
+use uuid::Uuid;
 
 use crate::models::{DApp, CreateDAppRequest, ApiResponse};
 
@@ -39,8 +39,8 @@ pub async fn create_dapp(
     State(pool): State<SqlitePool>,
     Json(payload): Json<CreateDAppRequest>,
 ) -> Result<Json<ApiResponse<DAppResponse>>, StatusCode> {
-    let dapp_id = Uuid::new_v4();
-    let creator_id = Uuid::new_v4(); // In real app, this would come from auth
+    let dapp_id = Uuid::new_v4().to_string();
+    let creator_id = Uuid::new_v4().to_string(); // In real app, this would come from auth
     
     let result = sqlx::query(
         r#"
@@ -48,22 +48,22 @@ pub async fn create_dapp(
         VALUES (?, ?, ?, ?, ?, datetime('now'))
         "#,
     )
-    .bind(dapp_id.to_string())
+    .bind(&dapp_id)
     .bind(&payload.name)
     .bind(&payload.description)
     .bind(&payload.contract_address)
-    .bind(creator_id.to_string())
+    .bind(&creator_id)
     .execute(&pool)
     .await;
     
     match result {
         Ok(_) => {
             let response = DAppResponse {
-                id: dapp_id.to_string(),
+                id: dapp_id,
                 name: payload.name,
                 description: payload.description,
                 contract_address: payload.contract_address,
-                creator_id: creator_id.to_string(),
+                creator_id: creator_id,
                 created_at: chrono::Utc::now().to_rfc3339(),
             };
             Ok(Json(ApiResponse::success(response)))
@@ -76,12 +76,10 @@ pub async fn get_dapp(
     State(pool): State<SqlitePool>,
     Path(id): Path<String>,
 ) -> Result<Json<ApiResponse<DAppResponse>>, StatusCode> {
-    let dapp_id = Uuid::parse_str(&id).map_err(|_| StatusCode::BAD_REQUEST)?;
-    
     let result = sqlx::query(
         "SELECT id, name, description, contract_address, creator_id, created_at FROM dapps WHERE id = ?"
     )
-    .bind(dapp_id.to_string())
+    .bind(&id)
     .fetch_optional(&pool)
     .await;
     
@@ -239,9 +237,26 @@ mod tests {
         let database_url = std::env::var("TEST_DATABASE_URL")
             .unwrap_or_else(|_| "sqlite::memory:".to_string());
         
-        sqlx::SqlitePool::connect(&database_url)
+        let pool = sqlx::SqlitePool::connect(&database_url)
             .await
-            .expect("Failed to connect to test database")
+            .expect("Failed to connect to test database");
+            
+        // Create dapps table for testing
+        sqlx::query(
+            "CREATE TABLE IF NOT EXISTS dapps (
+                id TEXT PRIMARY KEY,
+                name TEXT NOT NULL,
+                description TEXT,
+                contract_address TEXT NOT NULL,
+                creator_id TEXT NOT NULL,
+                created_at TEXT DEFAULT (datetime('now'))
+            )"
+        )
+        .execute(&pool)
+        .await
+        .expect("Failed to create dapps table");
+        
+        pool
     }
 
     #[tokio::test]

@@ -107,7 +107,6 @@ impl Block {
 #[cfg(test)]
 mod tests {
     use super::*;
-    use ed25519_dalek::SigningKey;
     use crate::transaction::Transaction;
 
     #[test]
