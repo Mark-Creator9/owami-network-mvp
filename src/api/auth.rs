@@ -46,12 +46,12 @@ pub async fn register(
 
     let user_id = Uuid::new_v4().to_string();
 
-    let result = sqlx::query!(
-        "INSERT INTO users (id, username, password_hash) VALUES ($1, $2, $3)",
-        user_id,
-        payload.username,
-        hashed_password
+    let result = sqlx::query(
+        "INSERT INTO users (id, username, password_hash) VALUES ($1, $2, $3)"
     )
+    .bind(&user_id)
+    .bind(&payload.username)
+    .bind(&hashed_password)
     .execute(&pool)
     .await;
 
