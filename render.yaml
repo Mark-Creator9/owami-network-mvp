@@ -1,19 +1,26 @@
 services:
+  # Backend Service
   - type: web
-    name: owami-testnet
+    name: owami-network-backend
     env: rust
     buildCommand: cargo build --release
     startCommand: ./target/release/owami-network
     envVars:
       - key: PORT
-        value: 10000
+        value: 3002
       - key: RUST_LOG
         value: info
       - key: DATABASE_URL
-        value: sqlite:./data/owami.db
-    healthCheckPath: /api/health
-    disk:
-      name: data
-      mountPath: /app/data
-      sizeGB: 1
-    plan: starter
+        fromSecret: AIVEN_DATABASE_URL
+    
+  # Frontend Service (Static Site)
+  - type: web
+    name: owami-network-frontend
+    env: static
+    buildCommand: echo "No build needed for static site"
+    staticPublishPath: ./landing
+    routes:
+      - type: rewrite
+        source: /api/*
+        destination: https://owami-network-backend.onrender.com/api/$1
+

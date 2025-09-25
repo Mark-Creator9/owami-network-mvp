@@ -3,6 +3,8 @@ use ed25519_dalek::{SigningKey, VerifyingKey};
 use blake3;
 use hex;
 use crate::crypto_utils;
+use anyhow::Result;
+use crate::audit_log;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Transaction {
@@ -20,25 +22,35 @@ impl Transaction {
         to: String,
         amount: u64,
         data: Option<String>,
-        signing_key: &SigningKey,
     ) -> Self {
         let timestamp = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
             .expect("Time went backwards")
             .as_secs();
 
-        let mut tx = Transaction {
+        Transaction {
             from,
             to,
             amount,
             timestamp,
             signature: Vec::new(),
             data,
-        };
+        }
+    }
 
-        let signature = crypto_utils::sign_message(signing_key, &tx.hash_data());
-        tx.signature = crypto_utils::signature_to_bytes(&signature);
-        tx
+    pub fn sign(&mut self, signing_key: &SigningKey) -> Result<()> {
+        let signature = crypto_utils::sign_message(signing_key, &self.hash_data());
+        self.signature = crypto_utils::signature_to_bytes(&signature);
+        
+        audit_log::log_transaction_event(
+            "Transaction signed".to_string(),
+            format!("Transaction from {} to {} signed", self.from, self.to),
+            "success".to_string(),
+            Some(self.hash()),
+            None,
+        )?;
+        
+        Ok(())
     }
 
     fn hash_data(&self) -> Vec<u8> {
@@ -65,20 +77,62 @@ impl Transaction {
                 key_bytes.copy_from_slice(&bytes);
                 key_bytes
             },
-            _ => return false,
+            _ => {
+                let _ = audit_log::log_security_event(
+                    "Transaction verification failed".to_string(),
+                    format!("Invalid from address format: {}", self.from),
+                    "failure".to_string(),
+                    Some(self.hash()),
+                );
+                return false;
+            },
         };
         
         let public_key = match VerifyingKey::from_bytes(&public_key_bytes) {
             Ok(pk) => pk,
-            Err(_) => return false,
+            Err(_) => {
+                let _ = audit_log::log_security_event(
+                    "Transaction verification failed".to_string(),
+                    format!("Invalid public key from address: {}", self.from),
+                    "failure".to_string(),
+                    Some(self.hash()),
+                );
+                return false;
+            },
         };
         
         let signature = match crypto_utils::signature_from_bytes(&self.signature) {
             Ok(sig) => sig,
-            Err(_) => return false,
+            Err(_) => {
+                let _ = audit_log::log_security_event(
+                    "Transaction verification failed".to_string(),
+                    "Invalid signature format".to_string(),
+                    "failure".to_string(),
+                    Some(self.hash()),
+                );
+                return false;
+            },
         };
         
-        crypto_utils::verify_signature(&public_key, &self.hash_data(), &signature)
+        let result = crypto_utils::verify_signature(&public_key, &self.hash_data(), &signature);
+        
+        if result {
+            let _ = audit_log::log_security_event(
+                "Transaction verified".to_string(),
+                "Transaction signature verification successful".to_string(),
+                "success".to_string(),
+                Some(self.hash()),
+            );
+        } else {
+            let _ = audit_log::log_security_event(
+                "Transaction verification failed".to_string(),
+                "Signature verification failed".to_string(),
+                "failure".to_string(),
+                Some(self.hash()),
+            );
+        }
+        
+        result
     }
 
     pub fn hash(&self) -> String {
@@ -91,23 +145,25 @@ mod tests {
     use super::*;
 
     #[test]
-    fn test_transaction_creation() {
+    fn test_transaction_creation() -> Result<()> {
         let (signing_key, public_key) = crypto_utils::generate_keypair();
         
         let from = hex::encode(public_key.to_bytes());
         let to = "recipient_address".to_string();
         
-        let tx = Transaction::new(
+        let mut tx = Transaction::new(
             from.clone(),
             to.clone(),
             100,
             None,
-            &signing_key,
         );
+        
+        tx.sign(&signing_key)?;
         
         assert_eq!(tx.from, from);
         assert_eq!(tx.to, to);
         assert_eq!(tx.amount, 100);
         assert!(tx.verify());
+        Ok(())
     }
 }

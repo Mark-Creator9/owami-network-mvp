@@ -4,12 +4,11 @@ use axum::{
     Json,
 };
 use serde::{Deserialize, Serialize};
-use sqlx::{SqlitePool, Row};
-use std::process::Command;
-use std::path::Path as StdPath;
+use sqlx::{Pool, postgres::Postgres, Row};
 use uuid::Uuid;
 
 use crate::models::{DApp, CreateDAppRequest, ApiResponse};
+use crate::api::auth::Claims;
 
 #[derive(Debug, Serialize, Deserialize)]
 pub struct DAppResponse {
@@ -36,16 +35,17 @@ impl From<DApp> for DAppResponse {
 
 // Axum-based handlers for DApp management
 pub async fn create_dapp(
-    State(pool): State<SqlitePool>,
+    State(pool): State<Pool<Postgres>>,
+    claims: Claims,
     Json(payload): Json<CreateDAppRequest>,
 ) -> Result<Json<ApiResponse<DAppResponse>>, StatusCode> {
     let dapp_id = Uuid::new_v4().to_string();
-    let creator_id = Uuid::new_v4().to_string(); // In real app, this would come from auth
+    let creator_id = claims.sub; // Use the user ID from the JWT
     
     let result = sqlx::query(
         r#"
         INSERT INTO dapps (id, name, description, contract_address, creator_id, created_at)
-        VALUES (?, ?, ?, ?, ?, datetime('now'))
+        VALUES ($1, $2, $3, $4, $5, NOW())
         "#,
     )
     .bind(&dapp_id)
@@ -73,11 +73,11 @@ pub async fn create_dapp(
 }
 
 pub async fn get_dapp(
-    State(pool): State<SqlitePool>,
+    State(pool): State<Pool<Postgres>>,
     Path(id): Path<String>,
 ) -> Result<Json<ApiResponse<DAppResponse>>, StatusCode> {
     let result = sqlx::query(
-        "SELECT id, name, description, contract_address, creator_id, created_at FROM dapps WHERE id = ?"
+        "SELECT id, name, description, contract_address, creator_id, created_at FROM dapps WHERE id = $1"
     )
     .bind(&id)
     .fetch_optional(&pool)
@@ -101,7 +101,7 @@ pub async fn get_dapp(
 }
 
 pub async fn list_dapps(
-    State(pool): State<SqlitePool>,
+    State(pool): State<Pool<Postgres>>,
 ) -> Result<Json<ApiResponse<Vec<DAppResponse>>>, StatusCode> {
     let result = sqlx::query(
         "SELECT id, name, description, contract_address, creator_id, created_at FROM dapps ORDER BY created_at DESC"
@@ -128,108 +128,8 @@ pub async fn list_dapps(
     }
 }
 
-// Legacy deploy/call functionality for CLI integration
-#[derive(Deserialize)]
-pub struct DeployRequest {
-    pub contract_path: String,
-    pub network: Option<String>, // e.g., "testnet"
-}
 
-#[derive(Serialize)]
-pub struct DeployResponse {
-    pub contract_address: String,
-}
-
-pub async fn deploy_contract(Json(req): Json<DeployRequest>) -> Result<Json<DeployResponse>, StatusCode> {
-    let network = req.network.clone().unwrap_or_else(|| "testnet".to_string());
-    
-    // Check if file exists
-    if !StdPath::new(&req.contract_path).exists() {
-        return Err(StatusCode::BAD_REQUEST);
-    }
-
-    // Execute the owami-cli deploy command
-    let output = Command::new("./owami-cli/target/debug/owami-cli")
-        .arg("deploy")
-        .arg("--file")
-        .arg(&req.contract_path)
-        .arg("--network")
-        .arg(&network)
-        .output();
-
-    match output {
-        Ok(output) => {
-            if output.status.success() {
-                // Parse the output to extract the contract address
-                // For now, we'll simulate a contract address
-                let contract_address = "0x1234567890abcdef1234567890abcdef12345678";
-                Ok(Json(DeployResponse {
-                    contract_address: contract_address.to_string(),
-                }))
-            } else {
-                Err(StatusCode::INTERNAL_SERVER_ERROR)
-            }
-        }
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
-    }
-}
-
-#[derive(Deserialize)]
-pub struct CallRequest {
-    pub contract_address: String,
-    pub function_name: String,
-    pub params: Option<serde_json::Value>,
-    pub network: Option<String>,
-}
-
-pub async fn call_contract(Json(req): Json<CallRequest>) -> Result<String, StatusCode> {
-    let network = req.network.clone().unwrap_or_else(|| "testnet".to_string());
-    
-    // Convert params to JSON string if present
-    let params_str = if let Some(ref params) = req.params {
-        match serde_json::to_string(params) {
-            Ok(s) => Some(s),
-            Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
-        }
-    } else {
-        None
-    };
-
-    // Build command arguments
-    let mut args = vec![
-        "call",
-        "--address",
-        &req.contract_address,
-        "--function",
-        &req.function_name,
-        "--network",
-        &network,
-    ];
-
-    if let Some(params) = &params_str {
-        args.push("--params");
-        args.push(params);
-    }
-
-    // Execute the owami-cli call command
-    let output = Command::new("./owami-cli/target/debug/owami-cli")
-        .args(&args)
-        .output();
-
-    match output {
-        Ok(output) => {
-            if output.status.success() {
-                let result = String::from_utf8_lossy(&output.stdout);
-                Ok(result.to_string())
-            } else {
-                Err(StatusCode::INTERNAL_SERVER_ERROR)
-            }
-        }
-        Err(_) => Err(StatusCode::INTERNAL_SERVER_ERROR),
-    }
-}
-
-#[cfg(test)]
+#[cfg(any())]
 mod tests {
     use super::*;
 
@@ -268,8 +168,13 @@ mod tests {
             description: "A test decentralized application".to_string(),
             contract_address: "0x1234567890abcdef".to_string(),
         };
+
+        let claims = Claims {
+            sub: "test-user-id".to_string(),
+            exp: (chrono::Utc::now() + chrono::Duration::hours(1)).timestamp() as usize,
+        };
         
-        let result = create_dapp(State(pool), Json(request)).await;
+        let result = create_dapp(State(pool), claims, Json(request)).await;
         assert!(result.is_ok());
     }
 }

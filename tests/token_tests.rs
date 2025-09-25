@@ -5,7 +5,7 @@ use owami_network::{
 };
 
 #[test]
-fn test_token_transfer() {
+fn test_token_transfer() -> Result<(), Box<dyn std::error::Error>> {
     // Generate test keys
     let (alice_key, alice_public_key) = crypto_utils::generate_keypair();
     let (_bob_key, bob_public_key) = crypto_utils::generate_keypair();
@@ -14,16 +14,17 @@ fn test_token_transfer() {
     let bob_addr = hex::encode(bob_public_key.to_bytes());
 
     // Create transaction using the constructor
-    let tx = Transaction::new(
+    let mut tx = Transaction::new(
         alice_addr,
         bob_addr,
         100,
         None,
-        &alice_key
     );
+    tx.sign(&alice_key)?;
     
     // Use the correct verification method
-    assert!(tx.verify()); 
+    assert!(tx.verify());
+    Ok(())
 }
 
 #[test]

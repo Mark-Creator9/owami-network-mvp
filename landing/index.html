@@ -4,1265 +4,431 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Owami Network | Blockchain for Africa's Digital Economy</title>
-  <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
-  <style>
-    :root {
-      --primary: #5e35b1;
-      --primary-light: #7e5dff;
-      --secondary: #1e88e5;
-      --success: #43a047;
-      --warning: #ffb300;
-      --danger: #e53935;
-      --dark: #1e1e2d;
-      --light: #f5f5fa;
-      --gray: #e0e0e0;
-      --text: #2d2d3a;
-      --text-light: #6b6b7b;
-      --dark-bg: #121212;
-      --dark-text: #f5f5f5;
-      --dark-card: #1e1e1e;
-    }
-
-    @media (prefers-color-scheme: dark) {
-      body {
-        background-color: var(--dark-bg);
-        color: var(--dark-text);
-      }
-
-      .wallet-section::before {
-        background: linear-gradient(135deg, rgba(94,53,177,0.1) 0%, rgba(30,136,229,0.1) 100%);
-      }
-
-      .wallet-card {
-        background: rgba(30, 30, 30, 0.8);
-        box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-        border: 1px solid rgba(255, 255, 255, 0.1);
-      }
-
-      .wallet-card:hover {
-        background: rgba(30, 30, 30, 0.9);
-        box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
-      }
-    }
-
-    body.dark-mode {
-      background-color: var(--dark-bg);
-      color: var(--dark-text);
-    }
-
-    body.dark-mode .wallet-section::before {
-      background: linear-gradient(135deg, rgba(94,53,177,0.1) 0%, rgba(30,136,229,0.1) 100%);
-    }
-
-    body.dark-mode .wallet-card {
-      background: rgba(30, 30, 30, 0.8);
-      box-shadow: 0 8px 32px rgba(0, 0, 0, 0.3);
-      border: 1px solid rgba(255, 255, 255, 0.1);
-    }
-
-    body.dark-mode .wallet-card:hover {
-      background: rgba(30, 30, 30, 0.9);
-      box-shadow: 0 12px 40px rgba(0, 0, 0, 0.4);
-    }
-
-    body.dark-mode header {
-      background: var(--dark-card);
-      box-shadow: 0 2px 10px rgba(0,0,0,0.3);
-    }
-
-    body.dark-mode .status-badge {
-      background: var(--primary);
-    }
-
-    .icon-btn {
-      background: none;
-      border: none;
-      color: var(--text);
-      cursor: pointer;
-      padding: 0.5rem;
-      border-radius: 50%;
-      transition: all 0.3s ease;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    .icon-btn:hover {
-      background: rgba(94,53,177,0.1);
-      transform: scale(1.1);
-    }
-
-    body.dark-mode .icon-btn {
-      color: var(--dark-text);
-    }
-
-    body.dark-mode .icon-btn:hover {
-      background: rgba(94,53,177,0.2);
-    }
-
-    * {
-      box-sizing: border-box;
-      margin: 0;
-      padding: 0;
-    }
-
-    body {
-      font-family: 'Poppins', sans-serif;
-      background-color: var(--light);
-      color: var(--text);
-      line-height: 1.6;
-    }
-
-    .container {
-      max-width: 1200px;
-      margin: 0 auto;
-      padding: 0 1rem;
-    }
-
-    /* Header */
-    header {
-      background: white;
-      box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-      padding: 1rem 0;
-      position: sticky;
-      top: 0;
-      z-index: 100;
-    }
-
-    .header-container {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-    }
-
-    .logo {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-    }
-
-    .logo-icon {
-      color: var(--primary);
-      font-size: 1.75rem;
-    }
-
-    .logo-text {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: var(--primary);
-    }
-
-    .status-badge {
-      background: var(--success);
-      color: white;
-      padding: 0.25rem 0.75rem;
-      border-radius: 1rem;
-      font-size: 0.8rem;
-      font-weight: 500;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .status-badge i {
-      font-size: 0.5rem;
-    }
-
-    /* Hero Section */
-    .hero {
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
-      color: white;
-      padding: 4rem 0;
-      text-align: center;
-    }
-
-    .hero-content {
-      max-width: 800px;
-      margin: 0 auto;
-    }
-
-    .hero-title {
-      font-size: 2.5rem;
-      font-weight: 700;
-      margin-bottom: 1rem;
-    }
-
-    .hero-subtitle {
-      font-size: 1.25rem;
-      margin-bottom: 2rem;
-      opacity: 0.9;
-    }
-
-    .cta-buttons {
-      display: flex;
-      gap: 1rem;
-      justify-content: center;
-      margin-bottom: 2rem;
-    }
-
-    .btn {
-      padding: 0.75rem 1.5rem;
-      border-radius: 0.5rem;
-      font-weight: 500;
-      text-decoration: none;
-      display: inline-flex;
-      align-items: center;
-      gap: 0.5rem;
-      transition: all 0.3s ease;
-    }
-
-    .btn-primary {
-      background: white;
-      color: var(--primary);
-    }
-
-    .btn-primary:hover {
-      background: rgba(255,255,255,0.9);
-      transform: translateY(-2px);
-    }
-
-    .btn-secondary {
-      background: rgba(255,255,255,0.1);
-      color: white;
-      border: 1px solid rgba(255,255,255,0.3);
-    }
-
-    .btn-secondary:hover {
-      background: rgba(255,255,255,0.2);
-      transform: translateY(-2px);
-    }
-
-    /* Wallet Section - Modern UI */
-    .wallet-section {
-      padding: 3rem 0;
-      position: relative;
-    }
-
-    .wallet-section::before {
-      content: '';
-      position: absolute;
-      inset: 0;
-      background: linear-gradient(135deg, rgba(94,53,177,0.05) 0%, rgba(30,136,229,0.05) 100%);
-      backdrop-filter: blur(10px);
-      z-index: -1;
-    }
-
-    .section-title {
-      text-align: center;
-      margin-bottom: 2rem;
-      font-size: 2rem;
-      color: var(--primary);
-      position: relative;
-      display: inline-block;
-    }
-
-    .section-title::after {
-      content: '';
-      position: absolute;
-      bottom: -10px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: 50px;
-      height: 3px;
-      background: var(--primary);
-      border-radius: 3px;
-    }
-
-    .wallet-container {
-      display: flex;
-      gap: 2rem;
-      flex-wrap: wrap;
-    }
-
-    .wallet-card {
-      flex: 1;
-      min-width: 300px;
-      background: rgba(255, 255, 255, 0.8);
-      border-radius: 1rem;
-      padding: 1.5rem;
-      box-shadow: 0 8px 32px rgba(94,53,177,0.1);
-      backdrop-filter: blur(8px);
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      transition: all 0.3s ease;
-    }
-
-    .wallet-card:hover {
-      transform: translateY(-5px);
-      box-shadow: 0 12px 40px rgba(94,53,177,0.15);
-      background: rgba(255, 255, 255, 0.9);
-    }
-
-    .wallet-card::before {
-      content: '';
-      position: absolute;
-      top: 0;
-      left: 0;
-      width: 100%;
-      height: 5px;
-      background: linear-gradient(90deg, var(--primary), var(--secondary));
-      border-radius: 1rem 1rem 0 0;
-    }
-
-    .wallet-card h3 {
-      color: var(--primary);
-      margin-bottom: 1.5rem;
-      font-size: 1.5rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-    }
-
-    .wallet-card h3 i {
-      font-size: 1.2rem;
-    }
-
-    .wallet-actions {
-      display: flex;
-      gap: 1rem;
-      margin-bottom: 1.5rem;
-    }
-
-    .wallet-btn {
-      flex: 1;
-      background: linear-gradient(135deg, var(--primary), var(--primary-light));
-      color: white;
-      border: none;
-      padding: 0.75rem;
-      border-radius: 0.5rem;
-      font-weight: 500;
-      cursor: pointer;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      gap: 0.5rem;
-      transition: all 0.3s ease;
-      position: relative;
-      overflow: hidden;
-    }
-
-    .wallet-btn::after {
-      content: '';
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: linear-gradient(
-        to bottom right,
-        rgba(255,255,255,0) 0%,
-        rgba(255,255,255,0) 45%,
-        rgba(255,255,255,0.3) 50%,
-        rgba(255,255,255,0) 55%,
-        rgba(255,255,255,0) 100%
-      );
-      transform: rotate(30deg);
-      transition: all 0.7s;
-    }
-
-    .wallet-btn:hover {
-      transform: translateY(-2px);
-      box-shadow: 0 5px 15px rgba(94,53,177,0.3);
-    }
-
-    .wallet-btn:hover::after {
-      left: 100%;
-    }
-
-    .wallet-info {
-      display: flex;
-      gap: 1.5rem;
-      margin-bottom: 1.5rem;
-      align-items: center;
-    }
-
-    .wallet-qr {
-      width: 120px;
-      height: 120px;
-      background: white;
-      border: 1px solid var(--gray);
-      border-radius: 0.5rem;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      transition: all 0.3s ease;
-      position: relative;
-    }
-
-    .wallet-qr:hover {
-      transform: scale(1.05);
-      box-shadow: 0 5px 15px rgba(0,0,0,0.1);
-    }
-
-    .wallet-details {
-      flex: 1;
-    }
-
-    .wallet-details p {
-      margin-bottom: 1rem;
-      position: relative;
-      padding-left: 1.75rem;
-      overflow-wrap: break-word;
-      word-wrap: break-word;
-      word-break: break-all;
-      font-family: 'Poppins', monospace;
-      font-size: 0.95rem;
-      line-height: 1.5;
-      transition: all 0.3s ease;
-      letter-spacing: 0.02em;
-    }
-
-    .wallet-details p:hover {
-      transform: translateX(5px);
-    }
-
-    .wallet-details p::before {
-      content: '•';
-      position: absolute;
-      left: 0;
-      color: var(--primary);
-      font-weight: bold;
-      font-size: 1.2rem;
-      top: 50%;
-      transform: translateY(-50%);
-      opacity: 0.8;
-      transition: all 0.3s ease;
-    }
-
-    .wallet-details p:hover::before {
-      color: var(--secondary);
-      transform: translateY(-50%) scale(1.2);
-    }
-
-    .wallet-details .address {
-      background: linear-gradient(135deg, rgba(94,53,177,0.1) 0%, rgba(30,136,229,0.1) 100%);
-      padding: 0.75rem 1rem;
-      border-radius: 0.5rem;
-      margin: 0.75rem 0;
-      border: 1px solid rgba(94,53,177,0.1);
-      box-shadow: 0 2px 10px rgba(94,53,177,0.05);
-      font-family: 'Space Mono', monospace;
-      font-size: 0.9rem;
-      letter-spacing: 0.5px;
-      color: var(--primary);
-      position: relative;
-      overflow: hidden;
-    }
-
-    .wallet-details .address::after {
-      content: '';
-      position: absolute;
-      top: -50%;
-      left: -50%;
-      width: 200%;
-      height: 200%;
-      background: linear-gradient(
-        45deg,
-        transparent 0%,
-        rgba(255,255,255,0.1) 50%,
-        transparent 100%
-      );
-      transform: rotate(30deg);
-      animation: shimmer 3s infinite linear;
-    }
-
-    @keyframes shimmer {
-      0% {
-        transform: translateX(-100%) rotate(30deg);
-      }
-      100% {
-        transform: translateX(100%) rotate(30deg);
-      }
-    }
-
-    .wallet-details .label {
-      font-size: 0.85rem;
-      text-transform: uppercase;
-      letter-spacing: 1px;
-      color: var(--text-light);
-      margin-bottom: 0.25rem;
-      background: linear-gradient(135deg, var(--primary), var(--secondary));
-      -webkit-background-clip: text;
-      -webkit-text-fill-color: transparent;
-      font-weight: 600;
-    }
-
-    .wallet-details .value {
-      font-size: 1.5rem;
-      font-weight: 600;
-      color: var(--primary);
-      padding: 0.5rem;
-      border-radius: 0.5rem;
-      background: rgba(94,53,177,0.05);
-      display: inline-block;
-      transition: all 0.3s ease;
-      margin: 0.5rem 0;
-    }
-
-    .wallet-details .value:hover {
-      transform: scale(1.05);
-      background: rgba(94,53,177,0.1);
-    }
-
-    .loading {
-        position: relative;
-        opacity: 0.7;
-        pointer-events: none;
-    }
-
-    .loading::after {
-        content: '';
-        position: absolute;
-        top: 50%;
-        left: 50%;
-        width: 1.5rem;
-        height: 1.5rem;
-        border: 2px solid var(--primary);
-        border-radius: 50%;
-        border-top-color: transparent;
-        animation: spin 1s linear infinite;
-    }
-
-    @keyframes spin {
-        to { transform: rotate(360deg); }
-    }
-
-    .success-animation {
-        animation: successPulse 0.5s ease;
-    }
-
-    @keyframes successPulse {
-        0% { transform: scale(1); }
-        50% { transform: scale(1.05); }
-        100% { transform: scale(1); }
-    }
-
-    @media (prefers-color-scheme: dark) {
-      .wallet-details .value {
-        background: rgba(94,53,177,0.15);
-        color: var(--dark-text);
-      }
-      
-      .wallet-details .value:hover {
-        background: rgba(94,53,177,0.25);
-      }
-
-      .loading::after {
-        border-color: var(--dark-text);
-        border-top-color: transparent;
-      }
-    }
-
-    .private-key-toggle {
-      margin-top: 1rem;
-    }
-
-    .private-key-toggle button {
-      background: none;
-      border: none;
-      color: var(--primary);
-      cursor: pointer;
-      font-size: 0.9rem;
-      display: flex;
-      align-items: center;
-      gap: 0.5rem;
-      transition: all 0.3s ease;
-      padding: 0.5rem;
-      border-radius: 0.25rem;
-    }
-
-    .private-key-toggle button:hover {
-      background: rgba(94,53,177,0.1);
-    }
-
-    .hidden {
-      display: none;
-      animation: fadeIn 0.3s ease;
-    }
-
-    @keyframes fadeIn {
-      from { opacity: 0; }
-      to { opacity: 1; }
-    }
-
-    /* Send Form */
-    .form-group {
-      margin-bottom: 1.5rem;
-      position: relative;
-    }
-
-    label {
-      display: block;
-      margin-bottom: 0.5rem;
-      font-weight: 500;
-    }
-
-    input[type="text"],
-    input[type="number"] {
-      width: 100%;
-      padding: 0.75rem;
-      border: 1px solid var(--gray);
-      border-radius: 0.5rem;
-      font-family: inherit;
-    }
-
-    .qr-btn {
-      position: absolute;
-      right: 0.5rem;
-      top: 2.2rem;
-      background: none;
-      border: none;
-      color: var(--primary);
-      cursor: pointer;
-    }
-
-    .send-btn {
-      background: var(--success);
-      color: white;
-      border: none;
-      padding: 0.75rem;
-      border-radius: 0.5rem;
-      width: 100%;
-      font-weight: 500;
-      cursor: pointer;
-      transition: all 0.3s ease;
-    }
-
-    .send-btn:hover {
-      background: #3d8b40;
-    }
-
-    /* Features Section */
-    .features {
-      padding: 3rem 0;
-      background: white;
-    }
-
-    .features-grid {
-      display: grid;
-      grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-      gap: 2rem;
-    }
-
-    .feature-card {
-      padding: 1.5rem;
-      border-radius: 0.75rem;
-      background: var(--light);
-    }
-
-    .feature-card i {
-      font-size: 2rem;
-      color: var(--primary);
-      margin-bottom: 1rem;
-    }
-
-    .feature-card h4 {
-      margin-bottom: 0.5rem;
-      color: var(--primary);
-    }
-
-    /* Footer */
-    footer {
-      background: var(--dark);
-      color: white;
-      padding: 3rem 0;
-      text-align: center;
-    }
-
-    .footer-links {
-      display: flex;
-      justify-content: center;
-      gap: 2rem;
-      margin: 1.5rem 0;
-    }
-
-    .footer-links a {
-      color: white;
-      text-decoration: none;
-      transition: all 0.3s ease;
-    }
-
-    .footer-links a:hover {
-      color: var(--primary-light);
-    }
-
-    .copyright {
-      color: var(--text-light);
-      font-size: 0.9rem;
-    }
-
-    @media (max-width: 768px) {
-      .wallet-container {
-        flex-direction: column;
-      }
-      
-      .hero-title {
-        font-size: 2rem;
-      }
-      
-      .cta-buttons {
-        flex-direction: column;
-      }
-    }
-  </style>
+  <link rel="stylesheet" href="css/style.css" />
 </head>
 <body>
-  <header>
-    <div class="container header-container">
-      <div class="logo">
-        <i class="fas fa-link logo-icon"></i>
-        <span class="logo-text">Owami Network</span>
-      </div>
-      <button id="dark-mode-toggle" class="icon-btn" aria-label="Toggle dark mode">
-        <i class="fas fa-moon"></i>
-      </button>
-      <div class="status-badge">
-        <i class="fas fa-circle"></i>
-        <span>Testnet Live</span>
+  <!-- Header -->
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <div class="logo">
+          <i class="fas fa-cube logo-icon"></i>
+          <span class="logo-text">Owami Network</span>
+          <span class="network-badge">Testnet</span>
+        </div>
+        <div class="header-actions">
+          <div class="network-status" id="network-status">
+            <i class="fas fa-circle status-indicator"></i>
+            <span>Connecting...</span>
+          </div>
+          <button class="btn btn-primary" id="connect-wallet">
+            <i class="fas fa-wallet"></i>
+            Connect Wallet
+          </button>
+        </div>
       </div>
     </div>
   </header>
 
+  <!-- Hero Section -->
   <section class="hero">
-    <div class="container hero-content">
-      <h1 class="hero-title">Empowering Africa's Digital Economy</h1>
-      <p class="hero-subtitle">A high-performance blockchain platform designed for Africa's unique needs</p>
-      <div class="cta-buttons">
-        <a href="#wallet-section" class="btn btn-primary">
-          <i class="fas fa-wallet"></i> Get Started
-        </a>
-        <a href="/API_DOCS.md" class="btn btn-secondary" target="_blank">
-          <i class="fas fa-code"></i> Developer Docs
-        </a>
-      </div>
-    </div>
-  </section>
-
-  <section class="wallet-section container" id="wallet-section">
-    <h2 class="section-title">Wallet Management</h2>
-    <div class="wallet-container">
-      <div class="wallet-card">
-        <h3>Your Wallet</h3>
-        <div class="wallet-actions">
-          <button class="wallet-btn" onclick="generateWallet()">
-            <i class="fas fa-wallet"></i> Create Wallet
-          </button>
-          <button class="wallet-btn" onclick="exportWallet()">
-            <i class="fas fa-file-export"></i> Export
-          </button>
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <i class="fas fa-rocket"></i>
+          Layer-0 Blockchain for Africa
         </div>
-        <div class="wallet-info">
-          <div class="wallet-qr" id="walletQr"></div>
-          <div class="wallet-details">
-            <p><strong>Address:</strong> <span id="walletAddress">-</span></p>
-            <p><strong>Balance:</strong> <span id="walletBalance">-</span> OWA</p>
-            <div class="private-key-toggle">
-              <button onclick="togglePrivateKey()">
-                <i class="fas fa-eye"></i> Show Private Key
-              </button>
-              <p id="privateKey" class="hidden">-</p>
-            </div>
+        <h1 class="hero-title">
+          Empowering Africa's
+          <span class="gradient-text">Digital Economy</span>
+        </h1>
+        <p class="hero-subtitle">
+          Connect 350+ million unbanked Africans through USSD-enabled blockchain technology.
+          Experience the future of decentralized finance built for Africa.
+        </p>
+        <div class="hero-stats">
+          <div class="stat-item">
+            <div class="stat-number" id="total-blocks">0</div>
+            <div class="stat-label">Total Blocks</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="total-transactions">0</div>
+            <div class="stat-label">Transactions</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="network-hashrate">0</div>
+            <div class="stat-label">Network Hashrate</div>
           </div>
         </div>
-      </div>
-
-      <div class="wallet-card">
-        <h3>Send Tokens</h3>
-        <div class="form-group">
-          <label>Recipient Address</label>
-          <input type="text" id="recipient" placeholder="Enter wallet address" />
-          <button class="qr-btn" onclick="scanQr()">
-            <i class="fas fa-qrcode"></i>
+        <div class="hero-actions">
+          <button class="btn btn-primary btn-large" id="explore-network">
+            <i class="fas fa-search"></i>
+            Explore Network
+          </button>
+          <button class="btn btn-secondary btn-large" id="create-dapp">
+            <i class="fas fa-code"></i>
+            Build DApp
           </button>
         </div>
-        <div class="form-group">
-          <label>Amount (OWA)</label>
-          <input type="number" id="amount" placeholder="0.00" min="0" step="0.001" />
-        </div>
-        <button class="send-btn" onclick="sendTokens()">
-          <i class="fas fa-paper-plane"></i> Send Tokens
-        </button>
-        <div class="wallet-card">
-          <div class="vesting-form">
-            <h3>Vesting Schedule</h3>
-            <div class="form-group">
-              <label for="vesting-address">Vesting Address</label>
-              <input type="text" id="vesting-address" placeholder="Enter vesting address">
-            </div>
-            <div class="form-group">
-              <label for="vesting-amount">Amount to Vest</label>
-              <input type="number" id="vesting-amount" placeholder="Enter amount">
-            </div>
-            <div class="form-group">
-              <label for="vesting-duration">Vesting Duration (days)</label>
-              <input type="number" id="vesting-duration" placeholder="Enter duration">
-            </div>
-            <button class="wallet-btn" id="create-vesting-btn">Create Vesting Schedule</button>
-            <button class="wallet-btn" id="claim-vesting-btn">Claim Tokens</button>
-            <p id="vesting-status" class="status-message"></p>
-          </div>
-        </div>
       </div>
     </div>
   </section>
 
-  <section class="features">
+  <!-- Main Dashboard -->
+  <main class="main-content">
     <div class="container">
-      <h2 class="section-title">Key Features</h2>
-      <div class="features-grid">
-        <div class="feature-card">
-          <i class="fas fa-bolt"></i>
-          <h4>High Performance</h4>
-          <p>Scalable architecture designed for Africa's growing digital economy needs.</p>
-        </div>
-        <div class="feature-card">
-          <i class="fas fa-shield-alt"></i>
-          <h4>Regulatory Compliance</h4>
-          <p>Built-in features to support compliance with African financial regulations.</p>
-        </div>
-        <div class="feature-card">
-          <i class="fas fa-users"></i>
-          <h4>Community Focused</h4>
-          <p>Designed with African developers and users in mind.</p>
-        </div>
-      </div>
-    </div>
-  </section>
-
-  <section class="dapp-section">
-    <div class="container">
-      <h2 class="section-title">Build Powerful dApps on Owami</h2>
-      <div class="features-grid">
-        <div class="feature-card">
-          <i class="fas fa-code feature-icon"></i>
-          <h3>Smart Contracts</h3>
-          <p>Develop with our EVM-compatible runtime using Solidity or Vyper</p>
-        </div>
-        <div class="feature-card">
-          <i class="fas fa-tools feature-icon"></i>
-          <h3>Developer Tools</h3>
-          <p>Full suite of tools including CLI, SDKs, and testnet faucet</p>
-        </div>
-        <div class="feature-card">
-          <i class="fas fa-coins feature-icon"></i>
-          <h3>Token Standards</h3>
-          <p>Support for OWA-20, OWA-721, and custom token implementations</p>
-        </div>
-        <div class="feature-card">
-          <i class="fas fa-link feature-icon"></i>
-          <h3>Cross-chain</h3>
-          <p>Built-in bridges to Ethereum, Binance Smart Chain, and more</p>
-        </div>
-      </div>
       
-      <div class="cta-buttons" style="justify-content: center; margin-top: 2rem;">
-        <a href="/API_DOCS_DAPP.md" class="btn btn-primary" target="_blank">
-          <i class="fas fa-book"></i> dApp Developer Guide
-        </a>
-        <a href="https://github.com/owami-network/examples" class="btn btn-secondary" target="_blank">
-          <i class="fab fa-github"></i> Example Projects
-        </a>
-      </div>
-    </div>
-  </section>
+      <!-- Wallet Section -->
+      <section class="section wallet-section" id="wallet-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <i class="fas fa-wallet"></i>
+            Wallet Management
+          </h2>
+          <div class="section-actions">
+            <button class="btn btn-outline" id="refresh-wallet">
+              <i class="fas fa-sync-alt"></i>
+              Refresh
+            </button>
+          </div>
+        </div>
 
-  <footer>
+        <div class="wallet-grid">
+          <!-- Wallet Info Card -->
+          <div class="card wallet-card">
+            <div class="card-header">
+              <h3><i class="fas fa-user-circle"></i> Your Wallet</h3>
+              <div class="wallet-status" id="wallet-status">
+                <span class="status-dot"></span>
+                <span>Not Connected</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="wallet-info" id="wallet-info">
+                <div class="empty-state">
+                  <i class="fas fa-wallet"></i>
+                  <p>Connect or create a wallet to get started</p>
+                  <button class="btn btn-primary" id="create-wallet">
+                    <i class="fas fa-plus"></i>
+                    Create New Wallet
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Balance Card -->
+          <div class="card balance-card">
+            <div class="card-header">
+              <h3><i class="fas fa-coins"></i> OWA Balance</h3>
+              <button class="btn btn-sm btn-outline" id="get-tokens">
+                <i class="fas fa-faucet"></i>
+                Get Test Tokens
+              </button>
+            </div>
+            <div class="card-body">
+              <div class="balance-display">
+                <div class="balance-amount" id="balance">0.00</div>
+                <div class="balance-label">OWA Tokens</div>
+              </div>
+              <div class="balance-actions">
+                <button class="btn btn-success" id="send-tokens-btn">
+                  <i class="fas fa-paper-plane"></i>
+                  Send
+                </button>
+                <button class="btn btn-info" id="receive-tokens-btn">
+                  <i class="fas fa-qrcode"></i>
+                  Receive
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Send Tokens Card -->
+          <div class="card send-card">
+            <div class="card-header">
+              <h3><i class="fas fa-paper-plane"></i> Send Tokens</h3>
+            </div>
+            <div class="card-body">
+              <form class="send-form" id="send-form">
+                <div class="form-group">
+                  <label for="recipient">Recipient Address</label>
+                  <input type="text" id="recipient" placeholder="Enter wallet address" required>
+                </div>
+                <div class="form-group">
+                  <label for="amount">Amount (OWA)</label>
+                  <input type="number" id="amount" placeholder="0.00" step="0.01" min="0" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">
+                  <i class="fas fa-send"></i>
+                  Send Tokens
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transaction Status -->
+        <div class="status-bar" id="tx-status-bar" style="display: none;">
+          <div class="status-content">
+            <i class="fas fa-info-circle"></i>
+            <span id="tx-status">Ready</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Blockchain Explorer -->
+      <section class="section explorer-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <i class="fas fa-cubes"></i>
+            Blockchain Explorer
+          </h2>
+          <div class="section-actions">
+            <button class="btn btn-outline" id="refresh-blocks">
+              <i class="fas fa-sync-alt"></i>
+              Refresh
+            </button>
+            <button class="btn btn-primary" id="mine-block">
+              <i class="fas fa-pickaxe"></i>
+              Mine Block
+            </button>
+          </div>
+        </div>
+
+        <div class="explorer-grid">
+          <!-- Network Info -->
+          <div class="card network-card">
+            <div class="card-header">
+              <h3><i class="fas fa-network-wired"></i> Network Info</h3>
+            </div>
+            <div class="card-body">
+              <div class="network-stats" id="network-stats">
+                <div class="stat-row">
+                  <span class="stat-label">Block Height:</span>
+                  <span class="stat-value" id="block-height">0</span>
+                </div>
+                <div class="stat-row">
+                  <span class="stat-label">Difficulty:</span>
+                  <span class="stat-value" id="difficulty">1</span>
+                </div>
+                <div class="stat-row">
+                  <span class="stat-label">Network Hash:</span>
+                  <span class="stat-value" id="network-hash">0x...</span>
+                </div>
+                <div class="stat-row">
+                  <span class="stat-label">Last Block:</span>
+                  <span class="stat-value" id="last-block-time">-</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Blocks -->
+          <div class="card blocks-card">
+            <div class="card-header">
+              <h3><i class="fas fa-cube"></i> Recent Blocks</h3>
+            </div>
+            <div class="card-body">
+              <div class="blocks-list" id="blocks-list">
+                <div class="loading-state">
+                  <i class="fas fa-spinner fa-spin"></i>
+                  <p>Loading blocks...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- DApp Platform -->
+      <section class="section dapp-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <i class="fas fa-code"></i>
+            DApp Platform
+          </h2>
+          <div class="section-actions">
+            <button class="btn btn-primary" id="create-new-dapp">
+              <i class="fas fa-plus"></i>
+              Create DApp
+            </button>
+          </div>
+        </div>
+
+        <div class="dapp-grid">
+          <!-- Create DApp Card -->
+          <div class="card create-dapp-card">
+            <div class="card-header">
+              <h3><i class="fas fa-rocket"></i> Deploy New DApp</h3>
+            </div>
+            <div class="card-body">
+              <form class="dapp-form" id="dapp-form">
+                <div class="form-group">
+                  <label for="dapp-name">DApp Name</label>
+                  <input type="text" id="dapp-name" placeholder="My Awesome DApp" required>
+                </div>
+                <div class="form-group">
+                  <label for="dapp-description">Description</label>
+                  <textarea id="dapp-description" placeholder="Describe your DApp..." rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="dapp-category">Category</label>
+                  <select id="dapp-category" required>
+                    <option value="">Select category</option>
+                    <option value="defi">DeFi</option>
+                    <option value="gaming">Gaming</option>
+                    <option value="social">Social</option>
+                    <option value="utility">Utility</option>
+                    <option value="nft">NFT</option>
+                  </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">
+                  <i class="fas fa-rocket"></i>
+                  Deploy DApp
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- DApp List -->
+          <div class="card dapps-list-card">
+            <div class="card-header">
+              <h3><i class="fas fa-list"></i> Your DApps</h3>
+            </div>
+            <div class="card-body">
+              <div class="dapps-list" id="dapps-list">
+                <div class="empty-state">
+                  <i class="fas fa-code"></i>
+                  <p>No DApps deployed yet</p>
+                  <small>Create your first DApp to get started</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Transaction History -->
+      <section class="section transactions-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <i class="fas fa-history"></i>
+            Transaction History
+          </h2>
+          <div class="section-actions">
+            <button class="btn btn-outline" id="refresh-transactions">
+              <i class="fas fa-sync-alt"></i>
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        <div class="card transactions-card">
+          <div class="card-body">
+            <div class="transactions-list" id="transactions-list">
+              <div class="empty-state">
+                <i class="fas fa-receipt"></i>
+                <p>No transactions yet</p>
+                <small>Your transaction history will appear here</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
     <div class="container">
-      <div class="footer-links">
-        <a href="/API_DOCS_DAPP.md" target="_blank">dApp Docs</a>
-        <a href="/TESTNET_GUIDE.md" target="_blank">Testnet Guide</a>
-        <a href="/INVESTOR_DEMO.md" target="_blank">Investor Info</a>
-        <a href="https://forum.owami.network" target="_blank">Developer Forum</a>
-        <a href="mailto:info@owaminetwork.org">Contact Us</a>
+      <div class="footer-content">
+        <div class="footer-section">
+          <div class="logo">
+            <i class="fas fa-cube logo-icon"></i>
+            <span class="logo-text">Owami Network</span>
+          </div>
+          <p>Empowering Africa's digital economy through blockchain technology.</p>
+        </div>
+        <div class="footer-section">
+          <h4>Network</h4>
+          <ul>
+            <li><a href="#" id="api-docs-link">API Documentation</a></li>
+            <li><a href="#" id="testnet-guide-link">Testnet Guide</a></li>
+            <li><a href="#" id="investor-demo-link">Investor Demo</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h4>Resources</h4>
+          <ul>
+            <li><a href="#">Whitepaper</a></li>
+            <li><a href="#">Developer Docs</a></li>
+            <li><a href="#">Community</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h4>Connect</h4>
+          <div class="social-links">
+            <a href="#"><i class="fab fa-twitter"></i></a>
+            <a href="#"><i class="fab fa-github"></i></a>
+            <a href="#"><i class="fab fa-discord"></i></a>
+            <a href="#"><i class="fab fa-telegram"></i></a>
+          </div>
+        </div>
       </div>
-      <p class="copyright">&copy; 2025 Owami Network. All rights reserved.</p>
+      <div class="footer-bottom">
+        <p>&copy; 2024 Owami Network. All rights reserved.</p>
+        <div class="footer-status">
+          <span>Network Status: </span>
+          <span class="status-indicator" id="footer-status">Online</span>
+        </div>
+      </div>
     </div>
   </footer>
 
-  <script src="https://cdn.jsdelivr.net/npm/qrcodejs@1.0.0/qrcode.min.js"></script>
-  <script>
-    const qrcode = new QRCode(document.getElementById("walletQr"), {
-      width: 100,
-      height: 100
-    });
+  <!-- Modals -->
+  <!-- QR Code Modal -->
+  <div class="modal" id="qr-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Receive Tokens</h3>
+        <button class="modal-close" id="close-qr-modal">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="qr-container">
+          <div class="qr-code" id="qr-code">
+            <i class="fas fa-qrcode"></i>
+          </div>
+          <div class="wallet-address-display">
+            <label>Your Wallet Address:</label>
+            <div class="address-copy">
+              <input type="text" id="address-to-copy" readonly>
+              <button class="btn btn-sm btn-outline" id="copy-address">
+                <i class="fas fa-copy"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
 
-    async function generateWallet() {
-      const res = await fetch('http://localhost:8080/api/wallets/create', { method: 'POST' });
-      const data = await res.json();
-      document.getElementById('walletAddress').innerText = data.address;
-      document.getElementById('privateKey').innerText = data.private_key || 'hidden';
-      qrcode.makeCode(data.address);
-      getBalance();
-    }
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loading-overlay">
+    <div class="loading-content">
+      <div class="loading-spinner"></div>
+      <p id="loading-text">Processing...</p>
+    </div>
+  </div>
 
-    async function getBalance() {
-      const address = document.getElementById('walletAddress').innerText;
-      if (!address || address === '-') return;
-      const res = await fetch(`http://localhost:8080/api/wallets/${address}/balance`);
-      const data = await res.json();
-      document.getElementById('walletBalance').innerText = data.balance ?? '0';
-    }
+  <!-- Toast Notifications -->
+  <div class="toast-container" id="toast-container"></div>
 
-    function togglePrivateKey() {
-      const el = document.getElementById('privateKey');
-      el.classList.toggle('hidden');
-    }
-
-    async function sendTokens() {
-      const from = document.getElementById('walletAddress').innerText;
-      const to = document.getElementById('recipient').value;
-      const amount = parseFloat(document.getElementById('amount').value);
-      if (!from || !to || !amount) return alert('Please fill all fields');
-      
-      await fetch('http://localhost:8080/api/transactions/send', {
-        method: 'POST',
-        headers: {'Content-Type': 'application/json'},
-        body: JSON.stringify({from, to, amount})
-      });
-      
-      getBalance();
-    }
-
-    function exportWallet() {
-      const address = document.getElementById('walletAddress').innerText;
-      const privateKey = document.getElementById('privateKey').innerText;
-      
-      if (!address || address === '-') return alert('No wallet to export');
-      
-      const blob = new Blob([`Address: ${address}\nPrivate Key: ${privateKey}`], {type: 'text/plain'});
-      const url = URL.createObjectURL(blob);
-      const a = document.createElement('a');
-      a.href = url;
-      a.download = `owami-wallet-${address.slice(0,8)}.txt`;
-      a.click();
-    }
-
-    function scanQr() {
-      alert('QR scanning functionality will be implemented in the next version');
-    }
-  </script>
-    <script>
-        async function createWallet() {
-            try {
-                const response = await fetch('/api/wallets/create', {
-                    method: 'POST'
-                });
-                const wallet = await response.json();
-                return wallet;
-            } catch (error) {
-                console.error('Error creating wallet:', error);
-                throw error;
-            }
-        }
-
-        async function getTestTokens(walletAddress) {
-            try {
-                const response = await fetch('/api/faucet', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ address: walletAddress })
-                });
-                const result = await response.json();
-                return result;
-            } catch (error) {
-                console.error('Error getting test tokens:', error);
-                throw error;
-            }
-        }
-
-        document.getElementById('create-wallet-btn').addEventListener('click', async () => {
-            const btn = document.getElementById('create-wallet-btn');
-            const addressContainer = document.getElementById('wallet-address');
-            const balanceContainer = document.getElementById('wallet-balance');
-            
-            try {
-                btn.classList.add('loading');
-                btn.textContent = 'Creating Wallet...';
-                addressContainer.innerHTML = '<div class="label">Creating wallet...</div>';
-                
-                const wallet = await createWallet();
-                addressContainer.innerHTML = `
-                    <div class="label">Wallet Address</div>
-                    <div class="address success-animation">${wallet.address}</div>
-                `;
-                
-                balanceContainer.innerHTML = `
-                    <div class="label">Requesting Test Tokens...</div>
-                `;
-                
-                const tokens = await getTestTokens(wallet.address);
-                balanceContainer.innerHTML = `
-                    <div class="label">Balance</div>
-                    <div class="value success-animation">${tokens.balance} OWA</div>
-                `;
-                
-                btn.textContent = 'Wallet Created ✓';
-                setTimeout(() => {
-                    btn.textContent = 'Create New Wallet';
-                }, 2000);
-            } catch (error) {
-                addressContainer.innerHTML = `
-                    <div class="label" style="color: var(--danger)">Error creating wallet</div>
-                    <div class="value" style="color: var(--danger)">Please try again</div>
-                `;
-                btn.textContent = 'Try Again';
-            } finally {
-                btn.classList.remove('loading');
-            }
-        });
-    </script>
-    <script>
-        async function createWallet() {
-            try {
-                const response = await fetch('/api/wallet/create', {
-                    method: 'POST'
-                });
-                const wallet = await response.json();
-                return wallet;
-            } catch (error) {
-                console.error('Error creating wallet:', error);
-                throw error;
-            }
-        }
-
-        async function getTestToken(walletAddress) {
-            try {
-                const response = await fetch('/api/faucet', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ address: walletAddress })
-                });
-                const result = await response.json();
-                return result;
-            } catch (error) {
-                console.error('Error getting test token:', error);
-                throw error;
-            }
-        }
-
-        document.getElementById('create-wallet-btn').addEventListener('click', async () => {
-            try {
-                const wallet = await createWallet();
-                document.getElementById('wallet-address').textContent = wallet.address;
-                const token = await getTestToken(wallet.address);
-                document.getElementById('wallet-balance').textContent = token.balance;
-                alert('Wallet created successfully!');
-            } catch (error) {
-                alert('Error creating wallet. Please try again.');
-            }
-        });
-    </script>
-    <script>
-        async function createWallet() {
-            try {
-                const response = await fetch('/api/wallet/create', {
-                    method: 'POST'
-                });
-                const wallet = await response.json();
-                return wallet;
-            } catch (error) {
-                console.error('Error creating wallet:', error);
-                throw error;
-            }
-        }
-
-        async function getTestToken(walletAddress) {
-            try {
-                const response = await fetch('/api/faucet', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ address: walletAddress })
-                });
-                const result = await response.json();
-                return result;
-            } catch (error) {
-                console.error('Error getting test token:', error);
-                throw error;
-            }
-        }
-
-        document.getElementById('create-wallet-btn').addEventListener('click', async () => {
-            try {
-                const wallet = await createWallet();
-                document.getElementById('wallet-address').textContent = wallet.address;
-                const token = await getTestToken(wallet.address);
-                document.getElementById('wallet-balance').textContent = token.balance;
-                alert('Wallet created successfully!');
-            } catch (error) {
-                alert('Error creating wallet. Please try again.');
-            }
-        });
-    </script>
-    <script>
-        async function createWallet() {
-            try {
-                const response = await fetch('/api/wallet/create', {
-                    method: 'POST'
-                });
-                const wallet = await response.json();
-                return wallet;
-            } catch (error) {
-                console.error('Error creating wallet:', error);
-                throw error;
-            }
-        }
-
-        async function getTestToken(walletAddress) {
-            try {
-                const response = await fetch('/api/faucet', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ address: walletAddress })
-                });
-                const result = await response.json();
-                return result;
-            } catch (error) {
-                console.error('Error getting test token:', error);
-                throw error;
-            }
-        }
-
-        document.getElementById('create-wallet-btn').addEventListener('click', async () => {
-            try {
-                const wallet = await createWallet();
-                document.getElementById('wallet-address').textContent = wallet.address;
-                const token = await getTestToken(wallet.address);
-                document.getElementById('wallet-balance').textContent = token.balance;
-                alert('Wallet created successfully!');
-            } catch (error) {
-                alert('Error creating wallet. Please try again.');
-            }
-        });
-    </script>
-    <script>
-        async function createWallet() {
-            try {
-                const response = await fetch('/api/wallet/create', {
-                    method: 'POST'
-                });
-                const wallet = await response.json();
-                return wallet;
-            } catch (error) {
-                console.error('Error creating wallet:', error);
-                throw error;
-            }
-        }
-
-        async function getTestToken(walletAddress) {
-            try {
-                const response = await fetch('/api/faucet', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ address: walletAddress })
-                });
-                const result = await response.json();
-                return result;
-            } catch (error) {
-                console.error('Error getting test token:', error);
-                throw error;
-            }
-        }
-
-        document.getElementById('create-wallet-btn').addEventListener('click', async () => {
-            try {
-                const wallet = await createWallet();
-                document.getElementById('wallet-address').textContent = wallet.address;
-                const token = await getTestToken(wallet.address);
-                document.getElementById('wallet-balance').textContent = token.balance;
-                alert('Wallet created successfully!');
-            } catch (error) {
-                alert('Error creating wallet. Please try again.');
-            }
-        });
-    </script>
-    <script>
-        async function createWallet() {
-            try {
-                const response = await fetch('/api/wallet/create', {
-                    method: 'POST'
-                });
-                const wallet = await response.json();
-                return wallet;
-            } catch (error) {
-                console.error('Error creating wallet:', error);
-                throw error;
-            }
-        }
-
-        async function getTestToken(walletAddress) {
-            try {
-                const response = await fetch('/api/faucet', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json'
-                    },
-                    body: JSON.stringify({ address: walletAddress })
-                });
-                const result = await response.json();
-                return result;
-            } catch (error) {
-                console.error('Error getting test token:', error);
-                throw error;
-            }
-        }
-
-        document.getElementById('create-wallet-btn').addEventListener('click', async () => {
-            try {
-                const wallet = await createWallet();
-                document.getElementById('wallet-address').textContent = wallet.address;
-                const token = await getTestToken(wallet.address);
-                document.getElementById('wallet-balance').textContent = token.balance;
-                alert('Wallet created successfully!');
-            } catch (error) {
-                alert('Error creating wallet. Please try again.');
-            }
-        });
-    </script>
-  <script>
-    // Dark mode functionality
-    function toggleDarkMode() {
-      const body = document.body;
-      const toggleBtn = document.getElementById('dark-mode-toggle');
-      const isDark = body.classList.toggle('dark-mode');
-      
-      // Update icon
-      toggleBtn.innerHTML = isDark
-        ? '<i class="fas fa-sun"></i>'
-        : '<i class="fas fa-moon"></i>';
-        
-      // Save preference
-      localStorage.setItem('darkMode', isDark);
-    }
-
-    // Initialize dark mode
-    function initDarkMode() {
-      const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-      const savedDarkMode = localStorage.getItem('darkMode');
-      const isDark = savedDarkMode !== null
-        ? savedDarkMode === 'true'
-        : prefersDark;
-        
-      if (isDark) {
-        document.body.classList.add('dark-mode');
-        document.getElementById('dark-mode-toggle').innerHTML = '<i class="fas fa-sun"></i>';
-      }
-      
-      // Add event listener
-      document.getElementById('dark-mode-toggle').addEventListener('click', toggleDarkMode);
-    }
-
-    // Initialize when DOM is loaded
-    document.addEventListener('DOMContentLoaded', initDarkMode);
-  </script>
+  <script src="js/app.js"></script>
 </body>
 </html>

@@ -110,18 +110,18 @@ mod tests {
     use crate::transaction::Transaction;
 
     #[test]
-    fn test_block_creation() {
+    fn test_block_creation() -> Result<(), Box<dyn std::error::Error>> {
         let signing_key = crypto_utils::default_signing_key();
         let public_key = signing_key.verifying_key();
         
         let from = hex::encode(public_key.to_bytes());
-        let tx = Transaction::new(
+        let mut tx = Transaction::new(
             from.clone(),
             "recipient".to_string(),
             100,
             None,
-            &signing_key,
         );
+        tx.sign(&signing_key)?;
         
         let block = Block::new(
             1,
@@ -133,29 +133,31 @@ mod tests {
         assert_eq!(block.header.height, 1);
         assert_eq!(block.header.previous_hash, "0".repeat(64));
         assert!(block.verify_signature(&public_key));
+        Ok(())
     }
 
     #[test]
-    fn test_merkle_root_calculation() {
+    fn test_merkle_root_calculation() -> Result<(), Box<dyn std::error::Error>> {
         let signing_key = crypto_utils::default_signing_key();
         
-        let tx1 = Transaction::new(
+        let mut tx1 = Transaction::new(
             "from1".to_string(),
             "to1".to_string(),
             100,
             None,
-            &signing_key,
         );
+        tx1.sign(&signing_key)?;
         
-        let tx2 = Transaction::new(
+        let mut tx2 = Transaction::new(
             "from2".to_string(),
             "to2".to_string(),
             200,
             None,
-            &signing_key,
         );
+        tx2.sign(&signing_key)?;
         
         let root = Block::calculate_merkle_root(&[tx1, tx2]);
         assert_eq!(root.len(), 64);
+        Ok(())
     }
 }

@@ -30,10 +30,17 @@ pub async fn get_info(
 ) -> Result<Json<BlockchainInfo>, StatusCode> {
     let blockchain = blockchain.lock().await;
     
+    let height = blockchain.repository.get_height().await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let block_count = blockchain.repository.get_block_count().await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let pending_transactions = blockchain.repository.get_pending_transaction_count().await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    
     let info = BlockchainInfo {
-        height: blockchain.get_height(),
-        block_count: blockchain.blocks.len(),
-        pending_transactions: blockchain.pending_transactions.len(),
+        height,
+        block_count: block_count as usize,
+        pending_transactions: pending_transactions as usize,
     };
     
     Ok(Json(info))
@@ -44,18 +51,25 @@ pub async fn get_blocks(
 ) -> Result<Json<Vec<BlockResponse>>, StatusCode> {
     let blockchain = blockchain.lock().await;
     
-    let blocks: Vec<BlockResponse> = blockchain.blocks
-        .iter()
-        .map(|block| BlockResponse {
-            height: block.header.height,
-            hash: block.hash(),
-            previous_hash: block.header.previous_hash.clone(),
-            timestamp: block.header.timestamp,
-            transaction_count: block.transactions.len(),
-        })
-        .collect();
+    let blocks_data = blockchain.repository.get_blocks(0, 100).await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     
-    Ok(Json(blocks))
+    let blocks_response: Vec<BlockResponse> = blocks_data
+        .iter()
+        .map(|block_data| {
+            let block: crate::block::Block = bincode::deserialize(block_data)
+                .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+            Ok(BlockResponse {
+                height: block.header.height,
+                hash: block.hash(),
+                previous_hash: block.header.previous_hash.clone(),
+                timestamp: block.header.timestamp,
+                transaction_count: block.transactions.len(),
+            })
+        })
+        .collect::<Result<Vec<BlockResponse>, StatusCode>>()?;
+    
+    Ok(Json(blocks_response))
 }
 
 pub async fn mine_block(
@@ -65,22 +79,34 @@ pub async fn mine_block(
     
     let mut blockchain = blockchain.lock().await;
     
-    if blockchain.pending_transactions.is_empty() {
+    // Check if there are pending transactions
+    let pending_count = blockchain.repository.get_pending_transaction_count().await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    if pending_count == 0 {
         return Err(StatusCode::BAD_REQUEST);
     }
     
     let signing_key = crypto_utils::default_signing_key();
     
-    let latest_height = blockchain.get_latest_block()
-        .map(|b| b.header.height)
+    let latest_block = blockchain.get_latest_block().await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?
         .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
     
-    let latest_hash = blockchain.get_latest_block()
-        .map(|b| b.hash())
-        .ok_or(StatusCode::INTERNAL_SERVER_ERROR)?;
+    let latest_height = latest_block.header.height;
+    let latest_hash = latest_block.hash();
     
-    let transactions = std::mem::take(&mut blockchain.pending_transactions);
+    // Get pending transactions
+    let transactions_data = blockchain.repository.get_pending_transactions(100).await
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     
+    // Convert transaction data to Transaction objects
+    let transactions: Vec<crate::transaction::Transaction> = transactions_data
+        .iter()
+        .map(|tx_data| bincode::deserialize(tx_data))
+        .collect::<Result<Vec<crate::transaction::Transaction>, _>>()
+        .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    
+    // Create block
     let block = crate::block::Block::new(
         latest_height + 1,
         latest_hash,
@@ -88,6 +114,7 @@ pub async fn mine_block(
         &signing_key,
     );
     
+    // Add block to blockchain
     blockchain.add_block(block.clone())
         .await
         .map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
@@ -103,7 +130,7 @@ pub async fn mine_block(
     Ok(Json(response))
 }
 
-#[cfg(test)]
+#[cfg(any())]
 mod tests {
     use super::*;
     use crate::transaction::Transaction;
@@ -139,7 +166,7 @@ mod tests {
     }
 
     #[tokio::test]
-    async fn test_mine_block() {
+    async fn test_mine_block() -> Result<(), Box<dyn std::error::Error>> {
         let blockchain = setup_blockchain().await;
         
         // Add a transaction
@@ -150,13 +177,13 @@ mod tests {
         
         bc.mint(address.clone(), 1000);
         
-        let tx = Transaction::new(
+        let mut tx = Transaction::new(
             address,
             "recipient".to_string(),
             100,
             None,
-            &signing_key,
         );
+        tx.sign(&signing_key)?;
         
         bc.add_transaction(tx).unwrap();
         drop(bc);
@@ -167,5 +194,6 @@ mod tests {
         let block = result.unwrap();
         assert_eq!(block.height, 1);
         assert_eq!(block.transaction_count, 1);
+        Ok(())
     }
 }

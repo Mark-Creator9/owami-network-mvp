@@ -1,0 +1,519 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Owami Network - Feedback Form</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --primary: #6366f1;
+      --primary-dark: #4f46e5;
+      --success: #10b981;
+      --warning: #f59e0b;
+      --danger: #ef4444;
+      --gray-50: #f9fafb;
+      --gray-100: #f3f4f6;
+      --gray-200: #e5e7eb;
+      --gray-300: #d1d5db;
+      --gray-500: #6b7280;
+      --gray-700: #374151;
+      --gray-900: #111827;
+      --white: #ffffff;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+    }
+
+    body {
+      font-family: 'Inter', sans-serif;
+      background: linear-gradient(135deg, var(--primary) 0%, #06b6d4 100%);
+      min-height: 100vh;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      max-width: 800px;
+      margin: 0 auto;
+    }
+
+    .feedback-card {
+      background: var(--white);
+      border-radius: 1rem;
+      box-shadow: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+      overflow: hidden;
+    }
+
+    .header {
+      background: linear-gradient(135deg, var(--primary), #06b6d4);
+      color: var(--white);
+      padding: 2rem;
+      text-align: center;
+    }
+
+    .header h1 {
+      font-size: 2rem;
+      font-weight: 700;
+      margin-bottom: 0.5rem;
+    }
+
+    .header p {
+      opacity: 0.9;
+      font-size: 1.1rem;
+    }
+
+    .form-container {
+      padding: 2rem;
+    }
+
+    .section {
+      margin-bottom: 2rem;
+    }
+
+    .section-title {
+      font-size: 1.25rem;
+      font-weight: 600;
+      color: var(--gray-900);
+      margin-bottom: 1rem;
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .form-group {
+      margin-bottom: 1.5rem;
+    }
+
+    .form-group label {
+      display: block;
+      font-weight: 500;
+      color: var(--gray-700);
+      margin-bottom: 0.5rem;
+    }
+
+    .form-group input,
+    .form-group select,
+    .form-group textarea {
+      width: 100%;
+      padding: 0.75rem;
+      border: 1px solid var(--gray-300);
+      border-radius: 0.5rem;
+      font-size: 0.875rem;
+      transition: all 0.15s ease;
+    }
+
+    .form-group input:focus,
+    .form-group select:focus,
+    .form-group textarea:focus {
+      outline: none;
+      border-color: var(--primary);
+      box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.1);
+    }
+
+    .form-group textarea {
+      resize: vertical;
+      min-height: 100px;
+    }
+
+    .rating-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+      gap: 1rem;
+    }
+
+    .rating-item {
+      display: flex;
+      flex-direction: column;
+      gap: 0.5rem;
+    }
+
+    .rating-item label {
+      font-size: 0.875rem;
+      font-weight: 500;
+    }
+
+    .rating-stars {
+      display: flex;
+      gap: 0.25rem;
+    }
+
+    .star {
+      font-size: 1.5rem;
+      color: var(--gray-300);
+      cursor: pointer;
+      transition: color 0.15s ease;
+    }
+
+    .star:hover,
+    .star.active {
+      color: #fbbf24;
+    }
+
+    .checkbox-group {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+      gap: 0.75rem;
+    }
+
+    .checkbox-item {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+
+    .checkbox-item input[type="checkbox"] {
+      width: auto;
+      margin: 0;
+    }
+
+    .btn {
+      display: inline-flex;
+      align-items: center;
+      justify-content: center;
+      gap: 0.5rem;
+      padding: 0.75rem 1.5rem;
+      border: none;
+      border-radius: 0.5rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.15s ease;
+      text-decoration: none;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: var(--white);
+    }
+
+    .btn-primary:hover {
+      background: var(--primary-dark);
+      transform: translateY(-1px);
+    }
+
+    .btn-secondary {
+      background: var(--gray-100);
+      color: var(--gray-700);
+    }
+
+    .btn-secondary:hover {
+      background: var(--gray-200);
+    }
+
+    .form-actions {
+      display: flex;
+      gap: 1rem;
+      justify-content: flex-end;
+      margin-top: 2rem;
+      padding-top: 2rem;
+      border-top: 1px solid var(--gray-200);
+    }
+
+    .success-message {
+      background: var(--success);
+      color: var(--white);
+      padding: 1rem;
+      border-radius: 0.5rem;
+      margin-bottom: 1rem;
+      display: none;
+    }
+
+    @media (max-width: 768px) {
+      .rating-group {
+        grid-template-columns: 1fr;
+      }
+      
+      .checkbox-group {
+        grid-template-columns: 1fr;
+      }
+      
+      .form-actions {
+        flex-direction: column;
+      }
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="feedback-card">
+      <div class="header">
+        <h1><i class="fas fa-cube"></i> Owami Network</h1>
+        <p>Help us improve the blockchain platform for Africa</p>
+      </div>
+
+      <div class="form-container">
+        <div class="success-message" id="success-message">
+          <i class="fas fa-check-circle"></i>
+          Thank you for your feedback! Your input is valuable for improving Owami Network.
+        </div>
+
+        <form id="feedback-form">
+          <!-- Basic Information -->
+          <div class="section">
+            <h2 class="section-title">
+              <i class="fas fa-user"></i>
+              Basic Information
+            </h2>
+            
+            <div class="form-group">
+              <label for="name">Name (Optional)</label>
+              <input type="text" id="name" name="name" placeholder="Your name">
+            </div>
+            
+            <div class="form-group">
+              <label for="email">Email (Optional)</label>
+              <input type="email" id="email" name="email" placeholder="your.email@example.com">
+            </div>
+            
+            <div class="form-group">
+              <label for="role">Your Role</label>
+              <select id="role" name="role" required>
+                <option value="">Select your role</option>
+                <option value="investor">Investor</option>
+                <option value="developer">Developer</option>
+                <option value="user">End User</option>
+                <option value="partner">Business Partner</option>
+                <option value="other">Other</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Overall Experience -->
+          <div class="section">
+            <h2 class="section-title">
+              <i class="fas fa-star"></i>
+              Overall Experience
+            </h2>
+            
+            <div class="rating-group">
+              <div class="rating-item">
+                <label>Overall Impression</label>
+                <div class="rating-stars" data-rating="overall">
+                  <i class="fas fa-star star" data-value="1"></i>
+                  <i class="fas fa-star star" data-value="2"></i>
+                  <i class="fas fa-star star" data-value="3"></i>
+                  <i class="fas fa-star star" data-value="4"></i>
+                  <i class="fas fa-star star" data-value="5"></i>
+                </div>
+              </div>
+              
+              <div class="rating-item">
+                <label>User Interface Design</label>
+                <div class="rating-stars" data-rating="design">
+                  <i class="fas fa-star star" data-value="1"></i>
+                  <i class="fas fa-star star" data-value="2"></i>
+                  <i class="fas fa-star star" data-value="3"></i>
+                  <i class="fas fa-star star" data-value="4"></i>
+                  <i class="fas fa-star star" data-value="5"></i>
+                </div>
+              </div>
+              
+              <div class="rating-item">
+                <label>Ease of Use</label>
+                <div class="rating-stars" data-rating="usability">
+                  <i class="fas fa-star star" data-value="1"></i>
+                  <i class="fas fa-star star" data-value="2"></i>
+                  <i class="fas fa-star star" data-value="3"></i>
+                  <i class="fas fa-star star" data-value="4"></i>
+                  <i class="fas fa-star star" data-value="5"></i>
+                </div>
+              </div>
+              
+              <div class="rating-item">
+                <label>Performance</label>
+                <div class="rating-stars" data-rating="performance">
+                  <i class="fas fa-star star" data-value="1"></i>
+                  <i class="fas fa-star star" data-value="2"></i>
+                  <i class="fas fa-star star" data-value="3"></i>
+                  <i class="fas fa-star star" data-value="4"></i>
+                  <i class="fas fa-star star" data-value="5"></i>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Features Tested -->
+          <div class="section">
+            <h2 class="section-title">
+              <i class="fas fa-check-square"></i>
+              Features Tested
+            </h2>
+            
+            <div class="checkbox-group">
+              <div class="checkbox-item">
+                <input type="checkbox" id="wallet" name="features" value="wallet">
+                <label for="wallet">Wallet Creation & Management</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="tokens" name="features" value="tokens">
+                <label for="tokens">Token Operations (Send/Receive)</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="explorer" name="features" value="explorer">
+                <label for="explorer">Blockchain Explorer</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="dapps" name="features" value="dapps">
+                <label for="dapps">DApp Platform</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="mining" name="features" value="mining">
+                <label for="mining">Block Mining</label>
+              </div>
+              <div class="checkbox-item">
+                <input type="checkbox" id="transactions" name="features" value="transactions">
+                <label for="transactions">Transaction History</label>
+              </div>
+            </div>
+          </div>
+
+          <!-- Detailed Feedback -->
+          <div class="section">
+            <h2 class="section-title">
+              <i class="fas fa-comments"></i>
+              Detailed Feedback
+            </h2>
+            
+            <div class="form-group">
+              <label for="liked">What did you like most?</label>
+              <textarea id="liked" name="liked" placeholder="Tell us what impressed you..."></textarea>
+            </div>
+            
+            <div class="form-group">
+              <label for="improvements">What could be improved?</label>
+              <textarea id="improvements" name="improvements" placeholder="Share your suggestions for improvement..."></textarea>
+            </div>
+            
+            <div class="form-group">
+              <label for="missing">Any missing features?</label>
+              <textarea id="missing" name="missing" placeholder="What features would you like to see added?"></textarea>
+            </div>
+            
+            <div class="form-group">
+              <label for="investment">Investment Perspective (for investors)</label>
+              <textarea id="investment" name="investment" placeholder="Your thoughts on the investment opportunity and market potential..."></textarea>
+            </div>
+          </div>
+
+          <!-- Market Feedback -->
+          <div class="section">
+            <h2 class="section-title">
+              <i class="fas fa-globe-africa"></i>
+              Market & Vision
+            </h2>
+            
+            <div class="form-group">
+              <label for="africa-focus">Thoughts on Africa-focused blockchain solution?</label>
+              <textarea id="africa-focus" name="africa-focus" placeholder="Your perspective on targeting African markets and USSD integration..."></textarea>
+            </div>
+            
+            <div class="form-group">
+              <label for="competitive">How does this compare to other blockchain platforms?</label>
+              <textarea id="competitive" name="competitive" placeholder="Competitive advantages or disadvantages you noticed..."></textarea>
+            </div>
+          </div>
+
+          <div class="form-actions">
+            <button type="button" class="btn btn-secondary" onclick="window.history.back()">
+              <i class="fas fa-arrow-left"></i>
+              Back to Platform
+            </button>
+            <button type="submit" class="btn btn-primary">
+              <i class="fas fa-paper-plane"></i>
+              Submit Feedback
+            </button>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    // Rating system
+    document.querySelectorAll('.rating-stars').forEach(ratingGroup => {
+      const stars = ratingGroup.querySelectorAll('.star');
+      const ratingName = ratingGroup.dataset.rating;
+      
+      stars.forEach((star, index) => {
+        star.addEventListener('click', () => {
+          const rating = index + 1;
+          
+          // Update visual state
+          stars.forEach((s, i) => {
+            s.classList.toggle('active', i < rating);
+          });
+          
+          // Store rating value
+          ratingGroup.dataset.value = rating;
+        });
+        
+        star.addEventListener('mouseenter', () => {
+          stars.forEach((s, i) => {
+            s.style.color = i <= index ? '#fbbf24' : '#d1d5db';
+          });
+        });
+      });
+      
+      ratingGroup.addEventListener('mouseleave', () => {
+        const currentRating = parseInt(ratingGroup.dataset.value) || 0;
+        stars.forEach((s, i) => {
+          s.style.color = i < currentRating ? '#fbbf24' : '#d1d5db';
+        });
+      });
+    });
+
+    // Form submission
+    document.getElementById('feedback-form').addEventListener('submit', function(e) {
+      e.preventDefault();
+      
+      // Collect form data
+      const formData = new FormData(this);
+      const feedback = {};
+      
+      // Basic form fields
+      for (let [key, value] of formData.entries()) {
+        if (key === 'features') {
+          if (!feedback.features) feedback.features = [];
+          feedback.features.push(value);
+        } else {
+          feedback[key] = value;
+        }
+      }
+      
+      // Collect ratings
+      document.querySelectorAll('.rating-stars').forEach(ratingGroup => {
+        const ratingName = ratingGroup.dataset.rating;
+        const ratingValue = ratingGroup.dataset.value;
+        if (ratingValue) {
+          feedback[ratingName + '_rating'] = parseInt(ratingValue);
+        }
+      });
+      
+      // Add timestamp
+      feedback.timestamp = new Date().toISOString();
+      feedback.platform = 'Owami Network Frontend';
+      
+      // Store feedback (in real app, this would be sent to server)
+      console.log('Feedback collected:', feedback);
+      localStorage.setItem('owami_feedback_' + Date.now(), JSON.stringify(feedback));
+      
+      // Show success message
+      document.getElementById('success-message').style.display = 'block';
+      this.style.display = 'none';
+      
+      // Scroll to top
+      window.scrollTo({ top: 0, behavior: 'smooth' });
+      
+      // In a real application, you would send this to your backend:
+      // fetch('/api/feedback', {
+      //   method: 'POST',
+      //   headers: { 'Content-Type': 'application/json' },
+      //   body: JSON.stringify(feedback)
+      // });
+    });
+  </script>
+</body>
+</html>

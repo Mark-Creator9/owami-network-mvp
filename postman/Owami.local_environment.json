@@ -1,0 +1,11 @@
+{
+  "id": "owami-local-env",
+  "name": "Owami Local",
+  "values": [
+    { "key": "baseUrl", "value": "http://localhost:3002", "enabled": true },
+    { "key": "jwt", "value": "", "enabled": true }
+  ],
+  "_postman_variable_scope": "environment",
+  "_postman_exported_at": "2025-09-25T00:00:00.000Z",
+  "_postman_exported_using": "Postman"
+}

@@ -1,0 +1,82 @@
+{
+  "info": {
+    "name": "Owami Network API",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Health",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": "{{baseUrl}}/api/health"
+      }
+    },
+    {
+      "name": "Auth - Register",
+      "request": {
+        "method": "POST",
+        "header": [ {"key": "Content-Type", "value": "application/json"} ],
+        "body": {"mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"Str0ngP@ss!\",\n  \"name\": \"Tester\"\n}"},
+        "url": "{{baseUrl}}/api/auth/register"
+      }
+    },
+    {
+      "name": "Auth - Login",
+      "request": {
+        "method": "POST",
+        "header": [ {"key": "Content-Type", "value": "application/json"} ],
+        "body": {"mode": "raw", "raw": "{\n  \"email\": \"user@example.com\",\n  \"password\": \"Str0ngP@ss!\"\n}"},
+        "url": "{{baseUrl}}/api/auth/login"
+      }
+    },
+    {
+      "name": "Token - Info",
+      "request": {"method": "GET", "header": [], "url": "{{baseUrl}}/api/token/info"}
+    },
+    {
+      "name": "Token - Balance",
+      "request": {"method": "GET", "header": [], "url": "{{baseUrl}}/api/token/balance/test_address_1"}
+    },
+    {
+      "name": "Token - Mint (JSON)",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Content-Type", "value": "application/json"},
+          {"key": "Authorization", "value": "Bearer {{jwt}}"}
+        ],
+        "body": {"mode": "raw", "raw": "{\n  \"address\": \"test_address_1\",\n  \"amount\": 1000\n}"},
+        "url": "{{baseUrl}}/api/token/mint"
+      }
+    },
+    {
+      "name": "Token - Transfer",
+      "request": {
+        "method": "POST",
+        "header": [
+          {"key": "Content-Type", "value": "application/json"},
+          {"key": "Authorization", "value": "Bearer {{jwt}}"}
+        ],
+        "body": {"mode": "raw", "raw": "{\n  \"from\": \"test_address_1\",\n  \"to\": \"test_address_2\",\n  \"amount\": 100\n}"},
+        "url": "{{baseUrl}}/api/token/transfer"
+      }
+    },
+    {
+      "name": "Blockchain - Info",
+      "request": {"method": "GET", "header": [], "url": "{{baseUrl}}/api/blockchain/info"}
+    },
+    {
+      "name": "Blockchain - Blocks",
+      "request": {"method": "GET", "header": [], "url": "{{baseUrl}}/api/blockchain/blocks"}
+    },
+    {
+      "name": "Blockchain - Mine",
+      "request": {
+        "method": "POST",
+        "header": [ {"key": "Content-Type", "value": "application/json"} ],
+        "url": "{{baseUrl}}/api/blockchain/mine"
+      }
+    }
+  ]
+}
