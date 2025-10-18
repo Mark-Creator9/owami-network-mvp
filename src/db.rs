@@ -6,6 +6,7 @@ pub async fn create_pool(config: &AppConfig) -> Result<Pool<sqlx::Postgres>, Box
     
     let pool = PgPoolOptions::new()
         .max_connections(config.database.pool_size)
+        .acquire_timeout(Duration::from_secs(30)) // Increased timeout for cloud environments
         .connect(&database_url)
         .await?;
     Ok(pool)
