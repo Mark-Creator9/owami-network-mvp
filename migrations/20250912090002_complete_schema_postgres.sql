@@ -56,7 +56,7 @@ CREATE TABLE IF NOT EXISTS dapp_states (
 
 -- Create blocks table
 CREATE TABLE IF NOT EXISTS blocks (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     height BIGINT NOT NULL UNIQUE,
     previous_hash VARCHAR(64) NOT NULL,
     hash VARCHAR(64) NOT NULL UNIQUE,
@@ -68,7 +68,7 @@ CREATE TABLE IF NOT EXISTS blocks (
 
 -- Create transactions table
 CREATE TABLE IF NOT EXISTS transactions (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     hash VARCHAR(64) NOT NULL UNIQUE,
     from_address VARCHAR(42) NOT NULL,
     to_address VARCHAR(42) NOT NULL,
@@ -88,7 +88,7 @@ CREATE TABLE IF NOT EXISTS balances (
 
 -- Create pending_transactions table
 CREATE TABLE IF NOT EXISTS pending_transactions (
-    id SERIAL PRIMARY KEY,
+    id BIGSERIAL PRIMARY KEY,
     transaction_data BYTEA NOT NULL, -- Serialized transaction
     created_at TIMESTAMP DEFAULT NOW()
 );

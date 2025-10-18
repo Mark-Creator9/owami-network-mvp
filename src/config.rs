@@ -51,10 +51,17 @@ impl AppConfig {
     pub fn load() -> Result<Self, Box<dyn std::error::Error>> {
         let config_path = std::env::var("CONFIG_PATH")
             .unwrap_or_else(|_| "config/production.toml".to_string());
-        
+
         let config_content = fs::read_to_string(&config_path)?;
-        let config: AppConfig = toml::from_str(&config_content)?;
-        
+        let mut config: AppConfig = toml::from_str(&config_content)?;
+
+        // Override port with PORT env var if present (for Render deployment)
+        if let Ok(port_str) = std::env::var("PORT") {
+            if let Ok(port) = port_str.parse::<u16>() {
+                config.server.port = port;
+            }
+        }
+
         Ok(config)
     }
     
