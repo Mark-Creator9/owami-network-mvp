@@ -1,5 +1,6 @@
 use sqlx::{Pool, postgres::PgPoolOptions, Row};
 use crate::config::AppConfig;
+use std::time::Duration;
 
 pub async fn create_pool(config: &AppConfig) -> Result<Pool<sqlx::Postgres>, Box<dyn std::error::Error>> {
     let database_url = config.database_url();
