@@ -4,8 +4,8 @@ port = 3002
 workers = 4
 
 [database]
-pool_size = 20
-timeout_seconds = 10
+pool_size = 50  # Increased for production throughput
+timeout_seconds = 30  # Extended for cloud environment reliability
 
 [logging]
 level = "info"
@@ -18,3 +18,11 @@ metrics_port = 9090
 [security]
 cors_origins = ["https://owami.network"]
 rate_limiting = { requests = 100, per_seconds = 60 }
+
+[consensus]
+consensus_type = "dpos"
+  [consensus.dpos]
+  validator_count = 7
+  block_interval = 3
+  stake_threshold = 1000
+  slashing_penalty = 50

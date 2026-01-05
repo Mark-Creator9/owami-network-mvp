@@ -9,6 +9,11 @@ default-run = "owami-network"
 jsonwebtoken = "8.3"
 bcrypt = "0.15"
 
+# WASM and smart contract dependencies
+which = "6.0"  # For finding executables
+sanitize-filename = "0.5"  # For sanitizing filenames
+tempfile = "3.10"  # For temporary files
+
 # Core blockchain
 ed25519-dalek = { version = "2.1", default-features = false, features = ["rand_core"] }
 blake3 = "1.5"
@@ -16,7 +21,7 @@ rand = "0.8"
 hex = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
-chrono = { version = "0.4", features = ["serde"], default-features = false }
+chrono = { version = "0.4", features = ["serde", "clock"], default-features = false }
 bincode = "1.3"  # For serialization/deserialization
 async-trait = "0.1"  # For async traits
 
@@ -27,10 +32,13 @@ tower = { version = "0.4", features = ["util"] }
 tower-http = { version = "0.5", features = ["cors", "fs", "limit"] }
 governor = "0.6"  # For advanced rate limiting
 lru_time_cache = "0.11"  # For IP-based rate limiting
-tempfile = "3.10"  # For temporary file handling
 
 # Database
-sqlx = { version = "0.7", features = ["runtime-tokio-rustls", "sqlite", "postgres", "chrono", "migrate"] }
+rocksdb = "0.21"
+
+# P2P Networking
+libp2p = { version = "0.53", features = ["tcp", "gossipsub", "identify", "kad", "noise", "yamux"] }
+libp2p-core = "0.39"
 
 # Logging
 tracing = "0.1"
@@ -40,9 +48,16 @@ uuid = { version = "1.0", features = ["v4"] }
 lazy_static = "1.4"
 toml = "0.8"
 
-# WASM (disabled temporarily for MVP)
-# wasmtime = "20.0"
-# wasmer = "4.2"
+# WASM Runtime
+wasmtime = { version = "20.0" }
+wasmparser = "0.201"
+wasm-bindgen = "0.2"
+wasm-bindgen-futures = "0.4"
+js-sys = "0.3"
+web-sys = "0.3"
+
+# Additional WASM utilities
+base64 = "0.22"
 
 [dev-dependencies]
 tokio-test = "0.4"
@@ -58,3 +73,7 @@ strip = true
 [[bin]]
 name = "generate-key"
 path = "src/bin/generate_key.rs"
+
+[[bin]]
+name = "owami-network"
+path = "src/main_simple.rs"

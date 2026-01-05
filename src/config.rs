@@ -10,8 +10,7 @@ pub struct ServerConfig {
 
 #[derive(Debug, Deserialize, Clone)]
 pub struct DatabaseConfig {
-    pub pool_size: u32,
-    pub timeout_seconds: u64,
+    pub data_dir: String,
 }
 
 #[derive(Debug, Deserialize, Clone)]
@@ -39,12 +38,27 @@ pub struct RateLimitingConfig {
 }
 
 #[derive(Debug, Deserialize, Clone)]
+pub struct ConsensusConfig {
+    pub consensus_type: String, // "poa", "dpos", etc.
+    pub dpos: DposConfig,
+}
+
+#[derive(Debug, Deserialize, Clone)]
+pub struct DposConfig {
+    pub validator_count: u32,
+    pub block_interval: u64,    // in seconds
+    pub stake_threshold: u64,
+    pub slashing_penalty: u64,
+}
+
+#[derive(Debug, Deserialize, Clone)]
 pub struct AppConfig {
     pub server: ServerConfig,
     pub database: DatabaseConfig,
     pub logging: LoggingConfig,
     pub monitoring: MonitoringConfig,
     pub security: SecurityConfig,
+    pub consensus: ConsensusConfig,
 }
 
 impl AppConfig {
@@ -55,7 +69,6 @@ impl AppConfig {
         let config_content = fs::read_to_string(&config_path)?;
         let mut config: AppConfig = toml::from_str(&config_content)?;
 
-        // Override port with PORT env var if present (for Render deployment)
         if let Ok(port_str) = std::env::var("PORT") {
             if let Ok(port) = port_str.parse::<u16>() {
                 config.server.port = port;
@@ -63,10 +76,5 @@ impl AppConfig {
         }
 
         Ok(config)
-    }
-    
-    pub fn database_url(&self) -> String {
-        std::env::var("DATABASE_URL")
-            .unwrap_or_else(|_| "sqlite:owami_testnet.db".to_string())
     }
 }

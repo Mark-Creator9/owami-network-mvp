@@ -3,7 +3,7 @@ services:
   - type: web
     name: owami-network-backend
     env: rust
-    buildCommand: cargo build --release
+    buildCommand: sqlx migrate run && cargo build --release
     startCommand: ./target/release/owami-network
     envVars:
       - key: PORT

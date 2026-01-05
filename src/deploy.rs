@@ -1,252 +1,451 @@
-use actix_multipart::Multipart;
-use actix_web::{post, get, web, HttpResponse, Responder};
-use futures::{StreamExt, TryStreamExt};
+use axum::{
+    extract::{Json, State},
+    http::StatusCode,
+    response::Response,
+};
 use serde::{Deserialize, Serialize};
-use std::fs::File;
-use std::io::Write;
-use std::path::Path;
-use std::sync::Arc;
-use tokio::sync::Mutex;
+use std::sync::{Arc, Mutex as StdMutex};
+use base64::Engine as _;
 
 // Import our modules
-use crate::deploy::{DeploymentService, DeployRequest, DeployResponse, CallRequest, CallResponse};
+use crate::{
+    wasm_runtime::{WasmEngine, ContractStorage},
+    contract_registry::{ContractRegistry, DeploymentRequest, CallRequest, CallResponse, DeployedContract},
+    compiler::CompilationService,
+    blockchain::Blockchain,
+    config::AppConfig,
+};
 
 /// Global deployment service
 #[derive(Clone)]
 pub struct AppState {
-    pub deployment_service: Arc<Mutex<DeploymentService>>,
+    pub deployment_service: Arc<StdMutex<DeploymentService>>,
 }
 
 impl AppState {
-    pub fn new() -> Self {
+    pub fn new(config: AppConfig) -> Self {
         Self {
-            deployment_service: Arc::new(Mutex::new(DeploymentService::new())),
+            deployment_service: Arc::new(StdMutex::new(DeploymentService::new(config))),
         }
     }
 }
 
-/// Upload contract file endpoint
-#[post("/upload")]
-async fn upload_contract(mut payload: Multipart) -> Result<HttpResponse, actix_web::Error> {
-    let mut filepath = String::new();
-    while let Ok(Some(mut field)) = payload.try_next().await {
-        let content_disposition = field.content_disposition();
-        if let Some(filename) = content_disposition.get_filename() {
-            let sanitized_filename = sanitize_filename::sanitize(filename);
-            let filepath_str = format!("./uploads/{}", sanitized_filename);
-            filepath = filepath_str.clone();
-            
-            // Create uploads directory if it doesn't exist
-            std::fs::create_dir_all("./uploads").unwrap();
-            
-            let mut f = web::block(|| File::create(filepath_str)).await??;
-            while let Some(chunk) = field.next().await {
-                let data = chunk?;
-                f = web::block(move || {
-                    let mut file = f;
-                    file.write_all(&data)?;
-                    Ok::<File, std::io::Error>(file)
-                }).await??;
-            }
-        }
-    }
-    Ok(HttpResponse::Ok().json(serde_json::json!({
-        "filepath": filepath,
-        "status": "uploaded"
-    })))
-}
-
-/// Deploy contract endpoint
-#[post("/deploy")]
-async fn deploy_contract(
-    data: web::Data<AppState>,
-    req: web::Json<DeployRequest>,
-) -> impl Responder {
-    let deployment_service = data.deployment_service.lock().unwrap();
-    
-    // Decode base64 contract code
-    let contract_code = match base64::decode(&req.contract_code) {
-        Ok(code) => code,
-        Err(e) => {
-            return HttpResponse::BadRequest()
-                .json(serde_json::json!({"error": format!("Invalid base64: {}", e)}));
-        }
-    };
-
-    match deployment_service
-        .deploy_from_code(&req.contract_type, &contract_code, &req.network)
-        .await
-    {
-        Ok(response) => HttpResponse::Ok().json(response),
-        Err(e) => HttpResponse::InternalServerError()
-            .json(serde_json::json!({"error": e})),
-    }
-}
-
-/// Deploy contract from file endpoint
-#[post("/deploy_file")]
-async fn deploy_contract_file(
-    data: web::Data<AppState>,
-    req: web::Json<serde_json::Value>,
-) -> impl Responder {
-    let contract_path = match req.get("contract_path").and_then(|v| v.as_str()) {
-        Some(path) => path,
-        None => {
-            return HttpResponse::BadRequest()
-                .json(serde_json::json!({"error": "Missing contract_path"}));
-        }
-    };
-
-    let contract_type = match req.get("contract_type").and_then(|v| v.as_str()) {
-        Some(t) => t,
-        None => {
-            return HttpResponse::BadRequest()
-                .json(serde_json::json!({"error": "Missing contract_type"}));
-        }
-    };
-
-    let network = req.get("network").and_then(|v| v.as_str()).unwrap_or("testnet");
-
-    let deployment_service = data.deployment_service.lock().unwrap();
-    
-    match deployment_service
-        .deploy_from_file(contract_path, contract_type, network)
-        .await
-    {
-        Ok(response) => HttpResponse::Ok().json(response),
-        Err(e) => HttpResponse::InternalServerError()
-            .json(serde_json::json!({"error": e})),
-    }
-}
-
-/// Call contract endpoint
-#[post("/call")]
-async fn call_contract(
-    data: web::Data<AppState>,
-    req: web::Json<CallRequest>,
-) -> impl Responder {
-    let deployment_service = data.deployment_service.lock().unwrap();
-    
-    // Check if contract exists
-    if deployment_service.get_contract(&req.contract_address).is_none() {
-        return HttpResponse::NotFound()
-            .json(serde_json::json!({"error": "Contract not found"}));
-    }
-
-    // For now, return a mock response
-    HttpResponse::Ok().json(CallResponse {
-        result: serde_json::json!({
-            "message": format!("Called {} on contract {}", req.function_name, req.contract_address),
-            "params": req.params
-        }),
-        gas_used: 1000,
-        status: "success".to_string(),
-    })
-}
-
-/// Get contract info endpoint
-#[get("/contracts/{address}")]
-async fn get_contract(
-    data: web::Data<AppState>,
-    address: web::Path<String>,
-) -> impl Responder {
-    let deployment_service = data.deployment_service.lock().unwrap();
-    
-    match deployment_service.get_contract(&address) {
-        Some(contract) => HttpResponse::Ok().json(contract),
-        None => HttpResponse::NotFound()
-            .json(serde_json::json!({"error": "Contract not found"})),
-    }
-}
-
-/// List all contracts endpoint
-#[get("/contracts")]
-async fn list_contracts(data: web::Data<AppState>) -> impl Responder {
-    let deployment_service = data.deployment_service.lock().unwrap();
-    let contracts = deployment_service.list_contracts();
-    
-    HttpResponse::Ok().json(contracts)
-}
-
-/// Deploy WASM contract via multipart upload
-#[post("/deploy_wasm")]
-async fn deploy_wasm_contract(
-    data: web::Data<AppState>,
-    mut payload: Multipart,
-) -> Result<HttpResponse, actix_web::Error> {
-    let mut wasm_bytes = Vec::new();
-    
-    // Process the multipart data to extract WASM file
-    while let Ok(Some(mut field)) = payload.try_next().await {
-        let content_disposition = field.content_disposition();
-        if let Some(filename) = content_disposition.get_filename() {
-            // Check if it's a WASM file
-            if filename.ends_with(".wasm") {
-                while let Some(chunk) = field.next().await {
-                    let data = chunk?;
-                    wasm_bytes.extend_from_slice(&data);
-                }
-            }
-        }
-    }
-    
-    if wasm_bytes.is_empty() {
-        return Ok(HttpResponse::BadRequest().json(serde_json::json!({
-            "error": "No WASM file provided"
 /// Contract deployment service
+#[allow(dead_code)]
 pub struct DeploymentService {
     registry: ContractRegistry,
-    blockchain: Blockchain,
+    wasm_engine: Arc<StdMutex<WasmEngine>>,
+    compilation_service: CompilationService,
+    blockchain: Arc<Blockchain>,
 }
 
 impl DeploymentService {
-    pub fn new() -> Self {
+    pub fn new(config: AppConfig) -> Self {
+        let blockchain = Arc::new(Blockchain::new(&config));
+        let storage = Arc::new(StdMutex::new(ContractStorage::new()));
+        let wasm_engine = Arc::new(StdMutex::new(WasmEngine::new(blockchain.clone(), storage).unwrap()));
+        let registry = ContractRegistry::new(wasm_engine.clone());
+        let compilation_service = CompilationService::new().unwrap_or_else(|_| CompilationService::new().unwrap());
+        
         Self {
-            registry: ContractRegistry::new(),
-            blockchain: Blockchain::new(),
+            registry,
+            wasm_engine,
+            compilation_service,
+            blockchain,
         }
     }
 
-    pub async fn deploy_from_file(
-        &self,
-        contract_path: &str,
-        contract_type: &str,
-        network: &str,
-    ) -> Result<DeployResponse, String> {
-        let contract_code = match contract_type {
-            "solidity" => SolidityCompiler::compile(contract_path)?,
-            "wasm" => {
-                let wasm_bytes = fs::read(contract_path)
-                    .map_err(|e| format!("Failed to read WASM file: {}", e))?;
-                wasm_bytes
-            }
-            _ => return Err(format!("Unsupported contract type: {}", contract_type)),
+    /// Deploy a new smart contract from WASM bytes
+    pub async fn deploy_wasm_contract(
+        &mut self,
+        wasm_bytes: Vec<u8>,
+        creator: String,
+        contract_type: String,
+    ) -> Result<DeployedContract, String> {
+        let request = DeploymentRequest {
+            wasm_bytecode: wasm_bytes,
+            creator,
+            contract_type,
+            constructor_args: None,
+            gas_limit: Some(1_000_000),
         };
+        
+        self.registry
+            .deploy_contract(request)
+            .await
+            .map_err(|e| e.to_string())
+    }
 
-        match contract_type {
-            "solidity" => self.registry.deploy_contract(contract_type, &contract_code, network).await,
-            "wasm" => self.registry.deploy_wasm_contract(&contract_code, network).await,
-            _ => Err(format!("Unsupported contract type: {}", contract_type)),
+    /// Deploy a contract from source code
+    pub async fn deploy_from_source(
+        &mut self,
+        source_code: String,
+        language: String,
+        creator: String,
+        contract_type: String,
+    ) -> Result<DeployedContract, String> {
+        let wasm_bytes = match language.to_lowercase().as_str() {
+            "rust" | "wasm" => {
+                self.compilation_service
+                    .compile_rust_to_wasm(&source_code, None)
+                    .map_err(|e| e.to_string())?
+            }
+            "solidity" => {
+                self.compilation_service
+                    .compile_solidity_to_wasm(&source_code, None)
+                    .map_err(|e| e.to_string())?
+            }
+            _ => return Err("Unsupported language. Use 'rust' or 'solidity'".to_string()),
+        };
+        
+        self.deploy_wasm_contract(wasm_bytes, creator, contract_type).await
+    }
+
+    /// Call a function on a deployed contract
+    pub async fn call_contract(
+        &mut self,
+        contract_address: String,
+        function_name: String,
+        args: Vec<u8>,
+        caller: String,
+    ) -> Result<CallResponse, String> {
+        let request = CallRequest {
+            contract_address,
+            function_name,
+            args,
+            caller,
+            value: None,
+            gas_limit: Some(1_000_000),
+        };
+        
+        self.registry
+            .call_contract(request)
+            .await
+            .map_err(|e| e.to_string())
+    }
+}
+
+/// Request to deploy a WASM contract
+#[derive(Debug, Deserialize)]
+pub struct WasmContractRequest {
+    pub wasm_bytecode: String,
+    pub creator: String,
+    pub contract_type: String,
+}
+
+/// Request to deploy from source code
+#[derive(Debug, Deserialize)]
+pub struct SourceContractRequest {
+    pub source_code: String,
+    pub language: String,
+    pub creator: String,
+    pub contract_type: String,
+}
+
+/// Request to call a contract function
+#[derive(Debug, Deserialize)]
+pub struct ContractCallRequest {
+    pub contract_address: String,
+    pub function_name: String,
+    pub args: Vec<u8>,
+    pub caller: String,
+}
+
+/// Response for contract deployment
+#[derive(Debug, Serialize)]
+pub struct DeploymentResponse {
+    pub success: bool,
+    pub contract_address: String,
+    pub message: String,
+    pub contract: Option<DeployedContract>,
+}
+
+/// Response for contract call
+#[derive(Debug, Serialize)]
+pub struct ContractCallResponse {
+    pub success: bool,
+    pub result: Vec<u8>,
+    pub gas_used: u64,
+    pub error: Option<String>,
+}
+
+/// API Routes
+
+/// Upload contract file
+pub async fn upload_contract(
+    State(state): State<AppState>,
+) -> Result<Response<String>, (StatusCode, String)> {
+    // Simplified file upload - in practice you'd handle multipart form data
+    let service = state.deployment_service.lock().unwrap();
+    let stats = service.registry.get_statistics();
+    
+    Ok(Response::builder()
+        .status(StatusCode::OK)
+        .body(serde_json::to_string(&stats).unwrap())
+        .unwrap())
+}
+
+/// Deploy WASM contract
+pub async fn deploy_wasm_contract(
+    State(state): State<AppState>,
+    Json(request): Json<WasmContractRequest>,
+) -> Result<Response<String>, (StatusCode, String)> {
+    let mut service = state.deployment_service.lock().unwrap();
+    
+    // Decode base64 WASM bytecode
+    let wasm_bytes = base64::engine::general_purpose::STANDARD
+        .decode(&request.wasm_bytecode)
+        .map_err(|_| (StatusCode::BAD_REQUEST, "Invalid base64 WASM bytecode".to_string()))?;
+    
+    match service.deploy_wasm_contract(
+        wasm_bytes,
+        request.creator,
+        request.contract_type,
+    ).await {
+        Ok(contract) => {
+            let response = DeploymentResponse {
+                success: true,
+                contract_address: contract.address.clone(),
+                message: "Contract deployed successfully".to_string(),
+                contract: Some(contract),
+            };
+            
+            Ok(Response::builder()
+                .status(StatusCode::OK)
+                .body(serde_json::to_string(&response).unwrap())
+                .unwrap())
+        }
+        Err(e) => {
+            let response = DeploymentResponse {
+                success: false,
+                contract_address: String::new(),
+                message: e,
+                contract: None,
+            };
+            
+            Ok(Response::builder()
+                .status(StatusCode::INTERNAL_SERVER_ERROR)
+                .body(serde_json::to_string(&response).unwrap())
+                .unwrap())
         }
     }
+}
 
-    pub async fn deploy_from_code(
-        &self,
-        contract_type: &str,
-        contract_code: &[u8],
-        network: &str,
-    ) -> Result<DeployResponse, String> {
-        match contract_type {
-            "solidity" => self.registry.deploy_contract(contract_type, contract_code, network).await,
-            "wasm" => self.registry.deploy_wasm_contract(contract_code, network).await,
-            _ => Err(format!("Unsupported contract type: {}", contract_type)),
+/// Deploy contract from source
+pub async fn deploy_contract(
+    State(state): State<AppState>,
+    Json(request): Json<SourceContractRequest>,
+) -> Result<Response<String>, (StatusCode, String)> {
+    let mut service = state.deployment_service.lock().unwrap();
+    
+    match service.deploy_from_source(
+        request.source_code,
+        request.language,
+        request.creator,
+        request.contract_type,
+    ).await {
+        Ok(contract) => {
+            let response = DeploymentResponse {
+                success: true,
+                contract_address: contract.address.clone(),
+                message: "Contract deployed successfully".to_string(),
+                contract: Some(contract),
+            };
+            
+            Ok(Response::builder()
+                .status(StatusCode::OK)
+                .body(serde_json::to_string(&response).unwrap())
+                .unwrap())
+        }
+        Err(e) => {
+            let response = DeploymentResponse {
+                success: false,
+                contract_address: String::new(),
+                message: e,
+                contract: None,
+            };
+            
+            Ok(Response::builder()
+                .status(StatusCode::INTERNAL_SERVER_ERROR)
+                .body(serde_json::to_string(&response).unwrap())
+                .unwrap())
         }
     }
+}
 
-    pub fn get_contract(&self, address: &str) -> Option<DeployedContract> {
-        self.registry.get_contract(address)
+/// Call contract function
+pub async fn call_contract(
+    State(state): State<AppState>,
+    Json(request): Json<ContractCallRequest>,
+) -> Result<Response<String>, (StatusCode, String)> {
+    let mut service = state.deployment_service.lock().unwrap();
+    
+    match service.call_contract(
+        request.contract_address,
+        request.function_name,
+        request.args,
+        request.caller,
+    ).await {
+        Ok(response) => {
+            let contract_response = ContractCallResponse {
+                success: response.success,
+                result: response.result,
+                gas_used: response.gas_used,
+                error: response.error,
+            };
+            
+            Ok(Response::builder()
+                .status(StatusCode::OK)
+                .body(serde_json::to_string(&contract_response).unwrap())
+                .unwrap())
+        }
+        Err(e) => {
+            let response = ContractCallResponse {
+                success: false,
+                result: vec![],
+                gas_used: 0,
+                error: Some(e),
+            };
+            
+            Ok(Response::builder()
+                .status(StatusCode::INTERNAL_SERVER_ERROR)
+                .body(serde_json::to_string(&response).unwrap())
+                .unwrap())
+        }
     }
+}
 
-    pub fn list_contracts(&self) -> Vec<DeployedContract> {
-        self.registry.list_contracts()
+/// Deploy contract from file
+pub async fn deploy_contract_file(
+    State(state): State<AppState>,
+) -> Result<Response<String>, (StatusCode, String)> {
+    // Simplified - in practice you'd handle file uploads
+    let service = state.deployment_service.lock().unwrap();
+    let stats = service.registry.get_statistics();
+    
+    Ok(Response::builder()
+        .status(StatusCode::OK)
+        .body(serde_json::to_string(&stats).unwrap())
+        .unwrap())
+}
+
+/// Get contract by address
+pub async fn get_contract(
+    State(state): State<AppState>,
+    address: String,
+) -> Result<Response<String>, (StatusCode, String)> {
+    let service = state.deployment_service.lock().unwrap();
+    
+    if let Some(contract) = service.registry.get_contract(&address) {
+        Ok(Response::builder()
+            .status(StatusCode::OK)
+            .body(serde_json::to_string(&contract).unwrap())
+            .unwrap())
+    } else {
+        Ok(Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .body("Contract not found".to_string())
+            .unwrap())
     }
+}
+
+/// List all contracts
+pub async fn list_contracts(
+    State(state): State<AppState>,
+) -> Result<Response<String>, (StatusCode, String)> {
+    let service = state.deployment_service.lock().unwrap();
+    let contracts = service.registry.list_contracts();
+    
+    Ok(Response::builder()
+        .status(StatusCode::OK)
+        .body(serde_json::to_string(&contracts).unwrap())
+        .unwrap())
+}
+
+/// Get contract storage
+pub async fn get_contract_storage(
+    State(state): State<AppState>,
+    address: String,
+) -> Result<Response<String>, (StatusCode, String)> {
+    let service = state.deployment_service.lock().unwrap();
+    
+    if let Some(storage) = service.registry.get_contract_storage(&address) {
+        Ok(Response::builder()
+            .status(StatusCode::OK)
+            .body(serde_json::to_string(&storage).unwrap())
+            .unwrap())
+    } else {
+        Ok(Response::builder()
+            .status(StatusCode::NOT_FOUND)
+            .body("Storage not found".to_string())
+            .unwrap())
+    }
+}
+
+/// Get deployment statistics
+pub async fn get_deployment_stats(
+    State(state): State<AppState>,
+) -> Result<Response<String>, (StatusCode, String)> {
+    let service = state.deployment_service.lock().unwrap();
+    let stats = service.registry.get_statistics();
+    
+    Ok(Response::builder()
+        .status(StatusCode::OK)
+        .body(serde_json::to_string(&stats).unwrap())
+        .unwrap())
+}
+
+/// Compile source code
+pub async fn compile_contract(
+    State(state): State<AppState>,
+    Json(request): Json<SourceContractRequest>,
+) -> Result<Response<String>, (StatusCode, String)> {
+    let service = state.deployment_service.lock().unwrap();
+    
+    let result = match request.language.to_lowercase().as_str() {
+        "rust" | "wasm" => {
+            service.compilation_service
+                .compile_rust_to_wasm(&request.source_code, None)
+        }
+        "solidity" => {
+            service.compilation_service
+                .compile_solidity_to_wasm(&request.source_code, None)
+        }
+        _ => return Err((StatusCode::BAD_REQUEST, "Unsupported language".to_string())),
+    };
+    
+    match result {
+        Ok(wasm_bytes) => {
+            let wasm_base64 = base64::engine::general_purpose::STANDARD.encode(&wasm_bytes);
+            Ok(Response::builder()
+                .status(StatusCode::OK)
+                .body(serde_json::to_string(&serde_json::json!({
+                    "success": true,
+                    "wasm_bytecode": wasm_base64,
+                    "size": wasm_bytes.len()
+                })).unwrap())
+                .unwrap())
+        }
+        Err(e) => {
+            Ok(Response::builder()
+                .status(StatusCode::INTERNAL_SERVER_ERROR)
+                .body(serde_json::to_string(&serde_json::json!({
+                    "success": false,
+                    "error": e.to_string()
+                })).unwrap())
+                .unwrap())
+        }
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use crate::config::AppConfig;
+
+    #[tokio::test]
+    async fn test_deployment_service_creation() {
+        let config = AppConfig::load().unwrap();
+        let _service = DeploymentService::new(config);
+    }
+}

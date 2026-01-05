@@ -1,71 +1,57 @@
 use axum::{
     extract::{Path, State},
     http::StatusCode,
-    Json,
+    response::Json,
 };
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use anyhow::Result;
+use crate::{blockchain::Blockchain, transaction::Transaction, crypto_utils, audit_log};
 
-use crate::blockchain::Blockchain;
-use crate::transaction::Transaction;
-use crate::crypto_utils;
-use crate::audit_log;
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct TransferRequest {
-    pub from: String,
-    pub to: String,
-    pub amount: u64,
-    // Note: In production, use proper authentication instead of private key in requests
-    pub private_key: String,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct BalanceResponse {
-    pub address: String,
-    pub balance: u64,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
-pub struct TransactionResponse {
-    pub hash: String,
-    pub from: String,
-    pub to: String,
-    pub amount: u64,
-    pub timestamp: u64,
-}
-
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize)]
 pub struct TokenInfo {
-    pub name: String,
-    pub symbol: String,
-    pub decimals: u8,
-    pub total_supply: u64,
-    pub contract_address: String,
+    name: String,
+    symbol: String,
+    decimals: u8,
+    total_supply: u64,
 }
 
-#[derive(Debug, Serialize, Deserialize)]
+#[derive(Serialize)]
+pub struct BalanceResponse {
+    address: String,
+    balance: u64,
+}
+
+#[derive(Deserialize)]
+pub struct TransferRequest {
+    from: String,
+    to: String,
+    amount: u64,
+    private_key: String,
+}
+
+#[derive(Deserialize)]
 pub struct MintRequest {
-    pub to: String,
-    pub amount: u64,
+    to: String,
+    amount: u64,
 }
 
-pub async fn get_token_info() -> Result<Json<TokenInfo>, StatusCode> {
-    let _ = audit_log::log_system_event(
-        "Token info requested".to_string(),
-        "Token information endpoint accessed".to_string(),
-        "info".to_string(),
-    );
-    
-    Ok(Json(TokenInfo {
-        name: "OWami Token".to_string(),
+#[derive(Serialize)]
+pub struct TransactionResponse {
+    hash: String,
+    from: String,
+    to: String,
+    amount: u64,
+    timestamp: i64, // Changed from u64 to i64
+}
+
+pub async fn get_token_info() -> Json<TokenInfo> {
+    Json(TokenInfo {
+        name: "Owami Token".to_string(),
         symbol: "OWA".to_string(),
         decimals: 18,
-        total_supply: 1000000000, // 1 billion tokens
-        contract_address: "0x742d35Cc6634C0532925a3b8D4e6D3b6e8d3e8A0".to_string(),
-    }))
+        total_supply: 1000000,
+    })
 }
 
 pub async fn get_balance(
@@ -73,7 +59,7 @@ pub async fn get_balance(
     Path(address): Path<String>,
 ) -> Result<Json<BalanceResponse>, StatusCode> {
     let blockchain = blockchain.lock().await;
-    let balance = blockchain.get_balance(&address).await;
+    let balance = blockchain.get_balance(&address).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     
     audit_log::log_security_event(
         "Balance queried".to_string(),
@@ -82,10 +68,9 @@ pub async fn get_balance(
         None,
     ).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     
-    let balance_value = balance.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     Ok(Json(BalanceResponse {
         address,
-        balance: balance_value,
+        balance,
     }))
 }
 
@@ -124,7 +109,7 @@ pub async fn transfer(
             "Transfer failed".to_string(),
             format!("Transaction signing failed for transfer from {}", payload.from),
             "failure".to_string(),
-            None,
+                None,
         ).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
         return Err(StatusCode::BAD_REQUEST);
     }
@@ -132,7 +117,7 @@ pub async fn transfer(
     let mut blockchain = blockchain.lock().await;
     
     // Add transaction to pending pool
-    if let Err(e) = blockchain.add_transaction(transaction.clone()).await {
+    if let Err(e) = blockchain.add_transaction(transaction.clone()) {
         audit_log::log_transaction_event(
             "Transfer failed".to_string(),
             format!("Failed to add transaction to pool: {}", e),
@@ -150,7 +135,7 @@ pub async fn transfer(
         from: transaction.from,
         to: transaction.to,
         amount: transaction.amount,
-        timestamp: transaction.timestamp,
+        timestamp: transaction.timestamp as i64, // Cast to i64
     };
     
     audit_log::log_transaction_event(
@@ -170,8 +155,8 @@ pub async fn mint(
     Json(amount): Json<u64>,
 ) -> Result<Json<BalanceResponse>, StatusCode> {
     let mut blockchain = blockchain.lock().await;
-    blockchain.mint(address.clone(), amount).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    let balance = blockchain.get_balance(&address).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    blockchain.mint(address.clone(), amount).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let balance = blockchain.get_balance(&address).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     
     audit_log::log_key_management_event(
         "Tokens minted".to_string(),
@@ -192,8 +177,8 @@ pub async fn mint_tokens(
     Json(payload): Json<MintRequest>,
 ) -> Result<Json<BalanceResponse>, StatusCode> {
     let mut blockchain = blockchain.lock().await;
-    blockchain.mint(payload.to.clone(), payload.amount).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    let balance = blockchain.get_balance(&payload.to).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    blockchain.mint(payload.to.clone(), payload.amount).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    let balance = blockchain.get_balance(&payload.to).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     
     audit_log::log_key_management_event(
         "Tokens minted".to_string(),
@@ -216,18 +201,15 @@ pub async fn get_transactions(
     // Get transactions from all blocks
     let mut transactions = Vec::new();
     
-    // Get all blocks from the database
-    let blocks_data = blockchain.repository.get_blocks(0, 1000).await.map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
-    
-    for block_data in blocks_data {
-        let block: crate::block::Block = bincode::deserialize(&block_data).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
+    // Get all blocks directly from the blockchain
+    for block in &blockchain.blocks {
         for tx in &block.transactions {
             transactions.push(TransactionResponse {
                 hash: tx.hash(),
                 from: tx.from.clone(),
                 to: tx.to.clone(),
                 amount: tx.amount,
-                timestamp: tx.timestamp,
+                timestamp: tx.timestamp as i64, // Cast to i64
             });
         }
     }
@@ -242,53 +224,4 @@ pub async fn get_transactions(
     ).map_err(|_| StatusCode::INTERNAL_SERVER_ERROR)?;
     
     Ok(Json(transactions))
-}
-
-#[cfg(any())]
-mod tests {
-    use super::*;
-
-    async fn setup_blockchain() -> Arc<Mutex<Blockchain>> {
-        let validator_key = crypto_utils::default_signing_key();
-        let blockchain = Blockchain::new(&validator_key);
-        Arc::new(Mutex::new(blockchain))
-    }
-
-    #[tokio::test]
-    async fn test_get_token_info() {
-        let result = get_token_info().await;
-        assert!(result.is_ok());
-        let info = result.unwrap();
-        assert_eq!(info.symbol, "OWA");
-    }
-
-    #[tokio::test]
-    async fn test_get_balance() {
-        let blockchain = setup_blockchain().await;
-        
-        // Mint some tokens
-        let mut bc = blockchain.lock().await;
-        bc.mint("test_address".to_string(), 1000);
-        drop(bc);
-        
-        let result = get_balance(State(blockchain), Path("test_address".to_string())).await;
-        assert!(result.is_ok());
-        let balance = result.unwrap();
-        assert_eq!(balance.balance, 1000);
-    }
-
-    #[tokio::test]
-    async fn test_mint() {
-        let blockchain = setup_blockchain().await;
-        
-        let result = mint(
-            State(blockchain.clone()),
-            Path("test_address".to_string()),
-            Json(500),
-        ).await;
-        
-        assert!(result.is_ok());
-        let balance = result.unwrap();
-        assert_eq!(balance.balance, 500);
-    }
 }

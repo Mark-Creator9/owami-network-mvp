@@ -55,3 +55,20 @@ pub fn signature_from_bytes(bytes: &[u8]) -> Result<Signature, String> {
 pub fn verify_signature(public_key: &VerifyingKey, message: &[u8], signature: &Signature) -> bool {
     public_key.verify(message, signature).is_ok()
 }
+
+/// Generate a default verifying key for testing
+pub fn default_verifying_key() -> VerifyingKey {
+    let signing_key = default_signing_key();
+    signing_key.verifying_key()
+}
+
+/// Convert hex string to VerifyingKey
+pub fn hex_to_verifying_key(hex_str: &str) -> Result<VerifyingKey, String> {
+    let bytes = hex::decode(hex_str).map_err(|e| e.to_string())?;
+    if bytes.len() != 32 {
+        return Err("Invalid key length".to_string());
+    }
+    let mut key_bytes = [0u8; 32];
+    key_bytes.copy_from_slice(&bytes);
+    VerifyingKey::from_bytes(&key_bytes).map_err(|e| e.to_string())
+}

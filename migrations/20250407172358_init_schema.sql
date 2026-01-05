@@ -1,3 +1,0 @@
--- Add all your database schema definitions here
--- Include tables, indexes, and other database objects
--- from all your existing migrations combined
