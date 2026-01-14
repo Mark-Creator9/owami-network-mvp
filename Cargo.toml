@@ -9,10 +9,10 @@ default-run = "owami-server"
 jsonwebtoken = "8.3"
 bcrypt = "0.15"
 
-# WASM and smart contract dependencies
-which = "6.0"  # For finding executables
-sanitize-filename = "0.5"  # For sanitizing filenames
-tempfile = "3.10"  # For temporary files
+# File utilities (keep for DApp file handling)
+which = "6.0"
+sanitize-filename = "0.5"
+tempfile = "3.10"
 
 # Core blockchain
 ed25519-dalek = { version = "2.1", default-features = false, features = ["rand_core"] }
@@ -22,16 +22,16 @@ hex = "0.4"
 serde = { version = "1.0", features = ["derive"] }
 serde_json = "1.0"
 chrono = { version = "0.4", features = ["serde", "clock"], default-features = false }
-bincode = "1.3"  # For serialization/deserialization
-async-trait = "0.1"  # For async traits
+bincode = "1.3"
+async-trait = "0.1"
 
 # Web server
 axum = "0.7"
 tokio = { version = "1.0", features = ["rt-multi-thread", "macros", "net"] }
 tower = { version = "0.4", features = ["util"] }
 tower-http = { version = "0.5", features = ["cors", "fs", "limit"] }
-governor = "0.6"  # For advanced rate limiting
-lru_time_cache = "0.11"  # For IP-based rate limiting
+governor = "0.6"
+lru_time_cache = "0.11"
 
 # Database
 rocksdb = "0.21"
@@ -48,16 +48,9 @@ uuid = { version = "1.0", features = ["v4"] }
 lazy_static = "1.4"
 toml = "0.8"
 
-# WASM Runtime
-wasmtime = { version = "20.0" }
-wasmparser = "0.201"
-wasm-bindgen = "0.2"
-wasm-bindgen-futures = "0.4"
-js-sys = "0.3"
-web-sys = "0.3"
-
-# Additional WASM utilities
-base64 = "0.22"
+# WASM Runtime (minimal - no libclang required)
+# wasmparser = "0.201"  # Removed for deployment
+# base64 = "0.22"  # Already imported by other crates
 
 [dev-dependencies]
 tokio-test = "0.4"
