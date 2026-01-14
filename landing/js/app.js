@@ -3,11 +3,11 @@ class OwamiApp {
   constructor() {
     // API Configuration - Updated to match your backend port
     // Assume app is served from same host/port as backend
-    this.API_BASE = '/api';
+    this.API_BASE = '/api/v1';
     this.ENDPOINTS = {
       // Health and status
       health: '/health',
-      status: '/status',
+      status: '/blockchain/status',
       
       // Authentication
       register: '/auth/register',
@@ -15,21 +15,21 @@ class OwamiApp {
       profile: '/auth/profile',
       
       // Blockchain
-      blockchainInfo: '/blockchain/info',
+      blockchainInfo: '/blockchain/status',
       blocks: '/blockchain/blocks',
       mineBlock: '/blockchain/mine',
       
       // Token operations
-      tokenInfo: '/token/info',
-      balance: '/token/balance',
-      transfer: '/token/transfer',
-      mint: '/token/mint',
-      transactions: '/token/transactions',
+      tokenInfo: '/tokens',
+      balance: '/tokens/balance',
+      transfer: '/tokens/transfer',
+      mint: '/tokens/mint',
+      transactions: '/tokens/transactions',
       
       // DApp management
       dapps: '/dapps',
-      deploy: '/deploy',
-      call: '/call'
+      deploy: '/dapps/deploy',
+      call: '/dapps/call'
     };
 
     // Application state

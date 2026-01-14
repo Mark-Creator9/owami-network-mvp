@@ -9,12 +9,8 @@ use axum::{
 use tower::ServiceExt; // for `oneshot`
 
 use owami_network::rate_limiting::{
-    RateLimiterState,
-    RateLimitingConfig,
-    api_rate_limiter_middleware,
-    rate_limiter_middleware,
-    ddos_protection_middleware,
-    health_check,
+    api_rate_limiter_middleware, ddos_protection_middleware, health_check, rate_limiter_middleware,
+    RateLimiterState, RateLimitingConfig,
 };
 
 fn make_state(config: RateLimitingConfig) -> Arc<RateLimiterState> {
@@ -24,28 +20,47 @@ fn make_state(config: RateLimitingConfig) -> Arc<RateLimiterState> {
 #[tokio::test]
 async fn ip_rate_limiter_allows_under_limit_and_blocks_over_limit() {
     // Allow 2 requests per minute per IP
-    let config = RateLimitingConfig { ip_requests_per_minute: 2, api_requests_per_second: 100, burst_capacity: 100 };
+    let config = RateLimitingConfig {
+        ip_requests_per_minute: 2,
+        api_requests_per_second: 100,
+        burst_capacity: 100,
+    };
     let state = make_state(config);
 
     let app = Router::new()
         .route("/any", get(|| async { "OK" }))
         .with_state(state.clone())
-        .layer(axum::middleware::from_fn_with_state(state.clone(), rate_limiter_middleware));
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            rate_limiter_middleware,
+        ));
 
     let addr: SocketAddr = "127.0.0.1:3000".parse().unwrap();
 
     // First request should pass
-    let req1 = Request::builder().uri("/any").extension(addr).body(Body::empty()).unwrap();
+    let req1 = Request::builder()
+        .uri("/any")
+        .extension(addr)
+        .body(Body::empty())
+        .unwrap();
     let res1 = app.clone().oneshot(req1).await.unwrap();
     assert_eq!(res1.status(), StatusCode::OK);
 
     // Second request should pass
-    let req2 = Request::builder().uri("/any").extension(addr).body(Body::empty()).unwrap();
+    let req2 = Request::builder()
+        .uri("/any")
+        .extension(addr)
+        .body(Body::empty())
+        .unwrap();
     let res2 = app.clone().oneshot(req2).await.unwrap();
     assert_eq!(res2.status(), StatusCode::OK);
 
     // Third request should be blocked (429)
-    let req3 = Request::builder().uri("/any").extension(addr).body(Body::empty()).unwrap();
+    let req3 = Request::builder()
+        .uri("/any")
+        .extension(addr)
+        .body(Body::empty())
+        .unwrap();
     let res3 = app.clone().oneshot(req3).await.unwrap();
     assert_eq!(res3.status(), StatusCode::TOO_MANY_REQUESTS);
 }
@@ -53,21 +68,34 @@ async fn ip_rate_limiter_allows_under_limit_and_blocks_over_limit() {
 #[tokio::test]
 async fn api_rate_limiter_blocks_second_immediate_call_same_endpoint() {
     // Allow 1 request per second with burst 1
-    let config = RateLimitingConfig { ip_requests_per_minute: 100, api_requests_per_second: 1, burst_capacity: 1 };
+    let config = RateLimitingConfig {
+        ip_requests_per_minute: 100,
+        api_requests_per_second: 1,
+        burst_capacity: 1,
+    };
     let state = make_state(config);
 
     let app = Router::new()
         .route("/endpoint", get(|| async { "OK" }))
         .with_state(state.clone())
-        .layer(axum::middleware::from_fn_with_state(state.clone(), api_rate_limiter_middleware));
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            api_rate_limiter_middleware,
+        ));
 
     // First call allowed
-    let req1 = Request::builder().uri("/endpoint").body(Body::empty()).unwrap();
+    let req1 = Request::builder()
+        .uri("/endpoint")
+        .body(Body::empty())
+        .unwrap();
     let res1 = app.clone().oneshot(req1).await.unwrap();
     assert_eq!(res1.status(), StatusCode::OK);
 
     // Immediate second call should be blocked for the same key (path)
-    let req2 = Request::builder().uri("/endpoint").body(Body::empty()).unwrap();
+    let req2 = Request::builder()
+        .uri("/endpoint")
+        .body(Body::empty())
+        .unwrap();
     let res2 = app.clone().oneshot(req2).await.unwrap();
     assert_eq!(res2.status(), StatusCode::TOO_MANY_REQUESTS);
 }
@@ -75,14 +103,21 @@ async fn api_rate_limiter_blocks_second_immediate_call_same_endpoint() {
 #[tokio::test]
 async fn api_rate_limiter_allows_different_endpoints_independently() {
     // 1 req/sec with burst 1; different paths should have separate keys
-    let config = RateLimitingConfig { ip_requests_per_minute: 100, api_requests_per_second: 1, burst_capacity: 1 };
+    let config = RateLimitingConfig {
+        ip_requests_per_minute: 100,
+        api_requests_per_second: 1,
+        burst_capacity: 1,
+    };
     let state = make_state(config);
 
     let app = Router::new()
         .route("/a", get(|| async { "A" }))
         .route("/b", get(|| async { "B" }))
         .with_state(state.clone())
-        .layer(axum::middleware::from_fn_with_state(state.clone(), api_rate_limiter_middleware));
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            api_rate_limiter_middleware,
+        ));
 
     let req_a = Request::builder().uri("/a").body(Body::empty()).unwrap();
     let res_a = app.clone().oneshot(req_a).await.unwrap();
@@ -96,23 +131,38 @@ async fn api_rate_limiter_allows_different_endpoints_independently() {
 #[tokio::test]
 async fn combined_rate_limiter_prioritizes_ip_limit() {
     // IP limit 1, API generous so block comes from IP check
-    let config = RateLimitingConfig { ip_requests_per_minute: 1, api_requests_per_second: 100, burst_capacity: 100 };
+    let config = RateLimitingConfig {
+        ip_requests_per_minute: 1,
+        api_requests_per_second: 100,
+        burst_capacity: 100,
+    };
     let state = make_state(config);
 
     let app = Router::new()
         .route("/ok", get(|| async { "OK" }))
         .with_state(state.clone())
-        .layer(axum::middleware::from_fn_with_state(state.clone(), rate_limiter_middleware));
+        .layer(axum::middleware::from_fn_with_state(
+            state.clone(),
+            rate_limiter_middleware,
+        ));
 
     let addr: SocketAddr = "10.0.0.1:8080".parse().unwrap();
 
     // First call passes
-    let req1 = Request::builder().uri("/ok").extension(addr).body(Body::empty()).unwrap();
+    let req1 = Request::builder()
+        .uri("/ok")
+        .extension(addr)
+        .body(Body::empty())
+        .unwrap();
     let res1 = app.clone().oneshot(req1).await.unwrap();
     assert_eq!(res1.status(), StatusCode::OK);
 
     // Second call should be blocked due to IP limit
-    let req2 = Request::builder().uri("/ok").extension(addr).body(Body::empty()).unwrap();
+    let req2 = Request::builder()
+        .uri("/ok")
+        .extension(addr)
+        .body(Body::empty())
+        .unwrap();
     let res2 = app.clone().oneshot(req2).await.unwrap();
     assert_eq!(res2.status(), StatusCode::TOO_MANY_REQUESTS);
 }

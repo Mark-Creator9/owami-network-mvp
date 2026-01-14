@@ -1,6 +1,4 @@
-use axum::{
-    Json,
-};
+use axum::Json;
 use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize)]
@@ -20,11 +18,9 @@ pub struct DAppResponse {
     pub created_at: String,
 }
 
-pub async fn create_dapp(
-    Json(payload): Json<CreateDAppPayload>,
-) -> Json<DAppResponse> {
+pub async fn create_dapp(Json(payload): Json<CreateDAppPayload>) -> Json<DAppResponse> {
     let creator_id = "default_creator".to_string(); // In a real implementation, this would come from auth
-    
+
     Json(DAppResponse {
         id: uuid::Uuid::new_v4().to_string(),
         name: payload.name,

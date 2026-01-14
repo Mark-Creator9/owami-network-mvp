@@ -1,8 +1,8 @@
 pub mod user;
 
-use serde::{Deserialize, Serialize};
 use chrono::DateTime;
 use chrono::Utc;
+use serde::{Deserialize, Serialize};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub struct TokenBalance {

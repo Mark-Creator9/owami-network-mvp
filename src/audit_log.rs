@@ -1,12 +1,12 @@
-use serde::{Deserialize, Serialize};
-use std::time::{SystemTime, UNIX_EPOCH};
-use tracing::{info, warn, error};
 use anyhow::Result;
-use std::fs::{OpenOptions, File};
+use lazy_static::lazy_static;
+use serde::{Deserialize, Serialize};
+use std::fs::{File, OpenOptions};
 use std::io::Write;
 use std::path::Path;
 use std::sync::Mutex;
-use lazy_static::lazy_static;
+use std::time::{SystemTime, UNIX_EPOCH};
+use tracing::{error, info, warn};
 
 #[derive(Debug, Serialize, Deserialize, Clone)]
 pub enum AuditEventType {
@@ -54,10 +54,10 @@ impl AuditLogger {
 
     pub fn log_event(&self, entry: AuditLogEntry) -> Result<()> {
         let json_entry = serde_json::to_string(&entry)?;
-        
+
         let mut file = self.log_file.lock().unwrap();
         writeln!(file, "{}", json_entry)?;
-        
+
         // Also log to tracing based on status
         match entry.status.as_str() {
             "success" => info!("AUDIT: {} - {}", entry.action, entry.details),
@@ -120,8 +120,14 @@ pub fn log_audit_event(entry: AuditLogEntry) -> Result<()> {
         // Fallback to tracing if logger not initialized
         match entry.status.as_str() {
             "success" => info!("AUDIT (fallback): {} - {}", entry.action, entry.details),
-            "failure" => error!("AUDIT FAILURE (fallback): {} - {}", entry.action, entry.details),
-            "warning" => warn!("AUDIT WARNING (fallback): {} - {}", entry.action, entry.details),
+            "failure" => error!(
+                "AUDIT FAILURE (fallback): {} - {}",
+                entry.action, entry.details
+            ),
+            "warning" => warn!(
+                "AUDIT WARNING (fallback): {} - {}",
+                entry.action, entry.details
+            ),
             _ => info!("AUDIT (fallback): {} - {}", entry.action, entry.details),
         }
         Ok(())
@@ -129,7 +135,12 @@ pub fn log_audit_event(entry: AuditLogEntry) -> Result<()> {
 }
 
 // Convenience functions for common audit events
-pub fn log_key_management_event(action: String, details: String, status: String, user_id: Option<String>) -> Result<()> {
+pub fn log_key_management_event(
+    action: String,
+    details: String,
+    status: String,
+    user_id: Option<String>,
+) -> Result<()> {
     let entry = AuditLogger::create_entry(
         AuditEventType::KeyManagement,
         action,
@@ -142,7 +153,13 @@ pub fn log_key_management_event(action: String, details: String, status: String,
     log_audit_event(entry)
 }
 
-pub fn log_transaction_event(action: String, details: String, status: String, user_id: Option<String>, resource: Option<String>) -> Result<()> {
+pub fn log_transaction_event(
+    action: String,
+    details: String,
+    status: String,
+    user_id: Option<String>,
+    resource: Option<String>,
+) -> Result<()> {
     let entry = AuditLogger::create_entry(
         AuditEventType::Transaction,
         action,
@@ -155,7 +172,12 @@ pub fn log_transaction_event(action: String, details: String, status: String, us
     log_audit_event(entry)
 }
 
-pub fn log_security_event(action: String, details: String, status: String, user_id: Option<String>) -> Result<()> {
+pub fn log_security_event(
+    action: String,
+    details: String,
+    status: String,
+    user_id: Option<String>,
+) -> Result<()> {
     let entry = AuditLogger::create_entry(
         AuditEventType::Security,
         action,
@@ -189,8 +211,13 @@ mod tests {
     #[test]
     fn test_audit_logger_creation() -> Result<()> {
         let temp_dir = tempdir()?;
-        let log_path = temp_dir.path().join("test_audit.log").to_str().unwrap().to_string();
-        
+        let log_path = temp_dir
+            .path()
+            .join("test_audit.log")
+            .to_str()
+            .unwrap()
+            .to_string();
+
         let _logger = AuditLogger::new(&log_path)?;
         assert!(Path::new(&log_path).exists());
         Ok(())

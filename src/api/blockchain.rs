@@ -1,12 +1,8 @@
-use axum::{
-    extract::{State},
-    http::StatusCode,
-    response::Json,
-};
+use crate::{audit_log, blockchain::Blockchain, crypto_utils};
+use axum::{extract::State, http::StatusCode, response::Json};
 use serde::{Deserialize, Serialize};
 use std::sync::Arc;
 use tokio::sync::Mutex;
-use crate::{blockchain::Blockchain, crypto_utils, audit_log};
 
 #[derive(Serialize)]
 pub struct BlockchainInfo {
@@ -48,7 +44,7 @@ pub async fn get_info(
     let block_count = blockchain.blocks.len() as u64;
     let pending_transactions = blockchain.pending_transactions.len();
     let latest_block_hash = blockchain.get_latest_block().hash();
-    
+
     Ok(Json(BlockchainInfo {
         height,
         block_count,
@@ -63,7 +59,7 @@ pub async fn get_blocks(
 ) -> Result<Json<Vec<BlockInfo>>, StatusCode> {
     let blockchain = blockchain.lock().await;
     let mut blocks_info = Vec::new();
-    
+
     // Get blocks data directly from the blockchain
     for (index, block) in blockchain.blocks.iter().enumerate() {
         blocks_info.push(BlockInfo {
@@ -74,7 +70,7 @@ pub async fn get_blocks(
             transaction_count: block.transactions.len(),
         });
     }
-    
+
     Ok(Json(blocks_info))
 }
 
@@ -83,7 +79,7 @@ pub async fn get_pending_transactions(
 ) -> Result<Json<Vec<TransactionInfo>>, StatusCode> {
     let blockchain = blockchain.lock().await;
     let mut transactions_info = Vec::new();
-    
+
     // Get pending transactions directly from the blockchain
     let _pending_count = blockchain.pending_transactions.len();
     for tx in &blockchain.pending_transactions {
@@ -95,7 +91,7 @@ pub async fn get_pending_transactions(
             timestamp: tx.timestamp as i64, // Cast to i64
         });
     }
-    
+
     Ok(Json(transactions_info))
 }
 
@@ -108,15 +104,15 @@ pub async fn mine_block(
         Ok(key) => key,
         Err(_) => return Err(StatusCode::BAD_REQUEST),
     };
-    
+
     let mut blockchain = blockchain.lock().await;
-    
+
     // Mine a new block
     let new_block = match blockchain.mine_block(&signing_key) {
         Ok(block) => block,
         Err(_) => return Err(StatusCode::INTERNAL_SERVER_ERROR),
     };
-    
+
     let block_info = BlockInfo {
         height: new_block.header.height,
         hash: new_block.hash(),
@@ -124,7 +120,7 @@ pub async fn mine_block(
         timestamp: new_block.header.timestamp as i64, // Cast to i64
         transaction_count: new_block.transactions.len(),
     };
-    
+
     // Log the mining event
     if let Err(_) = audit_log::log_system_event(
         "Block mined".to_string(),
@@ -133,6 +129,6 @@ pub async fn mine_block(
     ) {
         return Err(StatusCode::INTERNAL_SERVER_ERROR);
     }
-    
+
     Ok(Json(block_info))
 }

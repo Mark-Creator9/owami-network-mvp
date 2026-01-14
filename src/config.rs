@@ -46,7 +46,7 @@ pub struct ConsensusConfig {
 #[derive(Debug, Deserialize, Clone)]
 pub struct DposConfig {
     pub validator_count: u32,
-    pub block_interval: u64,    // in seconds
+    pub block_interval: u64, // in seconds
     pub stake_threshold: u64,
     pub slashing_penalty: u64,
 }
@@ -63,8 +63,8 @@ pub struct AppConfig {
 
 impl AppConfig {
     pub fn load() -> Result<Self, Box<dyn std::error::Error>> {
-        let config_path = std::env::var("CONFIG_PATH")
-            .unwrap_or_else(|_| "config/production.toml".to_string());
+        let config_path =
+            std::env::var("CONFIG_PATH").unwrap_or_else(|_| "config/production.toml".to_string());
 
         let config_content = fs::read_to_string(&config_path)?;
         let mut config: AppConfig = toml::from_str(&config_content)?;

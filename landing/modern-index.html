@@ -1,0 +1,438 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Owami Network | Africa's Blockchain Revolution</title>
+  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" />
+  <link rel="stylesheet" href="css/modern-style.css" />
+</head>
+<body>
+  <!-- 3D Background Canvas -->
+  <canvas id="background-canvas"></canvas>
+
+  <!-- Header -->
+  <header class="header">
+    <div class="container">
+      <div class="header-content">
+        <div class="logo">
+          <i class="fas fa-cube logo-icon"></i>
+          <span class="logo-text">Owami Network</span>
+          <span class="network-badge">Testnet</span>
+        </div>
+        <div class="header-actions">
+          <div class="network-status" id="network-status">
+            <i class="fas fa-circle status-indicator"></i>
+            <span>Connecting...</span>
+          </div>
+          <button class="btn btn-primary" id="connect-wallet">
+            <i class="fas fa-wallet"></i>
+            Connect Wallet
+          </button>
+        </div>
+      </div>
+    </div>
+  </header>
+
+  <!-- Hero Section -->
+  <section class="hero">
+    <div class="container">
+      <div class="hero-content">
+        <div class="hero-badge">
+          <i class="fas fa-rocket"></i>
+          Layer-0 Blockchain for Africa
+        </div>
+        <h1 class="hero-title">
+          Empowering Africa's
+          <span class="gradient-text">Digital Economy</span>
+        </h1>
+        <p class="hero-subtitle">
+          Connect 350+ million unbanked Africans through USSD-enabled blockchain technology.
+          Experience the future of decentralized finance built for Africa.
+        </p>
+        <div class="hero-stats">
+          <div class="stat-item">
+            <div class="stat-number" id="total-blocks">0</div>
+            <div class="stat-label">Total Blocks</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="total-transactions">0</div>
+            <div class="stat-label">Transactions</div>
+          </div>
+          <div class="stat-item">
+            <div class="stat-number" id="network-hashrate">0</div>
+            <div class="stat-label">Network Hashrate</div>
+          </div>
+        </div>
+        <div class="hero-actions">
+          <button class="btn btn-primary btn-large" id="explore-network">
+            <i class="fas fa-search"></i>
+            Explore Network
+          </button>
+          <button class="btn btn-secondary btn-large" id="create-dapp">
+            <i class="fas fa-code"></i>
+            Build DApp
+          </button>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- Main Dashboard -->
+  <main class="main-content">
+    <div class="container">
+      
+      <!-- Wallet Section -->
+      <section class="section wallet-section" id="wallet-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <i class="fas fa-wallet"></i>
+            Wallet Management
+          </h2>
+          <div class="section-actions">
+            <button class="btn btn-outline" id="refresh-wallet">
+              <i class="fas fa-sync-alt"></i>
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        <div class="wallet-grid">
+          <!-- Wallet Info Card -->
+          <div class="card wallet-card card-3d">
+            <div class="card-header">
+              <h3><i class="fas fa-user-circle"></i> Your Wallet</h3>
+              <div class="wallet-status" id="wallet-status">
+                <span class="status-dot"></span>
+                <span>Not Connected</span>
+              </div>
+            </div>
+            <div class="card-body">
+              <div class="wallet-info" id="wallet-info">
+                <div class="empty-state">
+                  <i class="fas fa-wallet"></i>
+                  <p>Connect or create a wallet to get started</p>
+                  <button class="btn btn-primary" id="create-wallet">
+                    <i class="fas fa-plus"></i>
+                    Create New Wallet
+                  </button>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Balance Card -->
+          <div class="card balance-card card-3d">
+            <div class="card-header">
+              <h3><i class="fas fa-coins"></i> OWA Balance</h3>
+              <button class="btn btn-sm btn-outline" id="get-tokens">
+                <i class="fas fa-faucet"></i>
+                Get Test Tokens
+              </button>
+            </div>
+            <div class="card-body">
+              <div class="balance-display">
+                <div class="balance-amount" id="balance">0.00</div>
+                <div class="balance-label">OWA Tokens</div>
+              </div>
+              <div class="balance-actions">
+                <button class="btn btn-success" id="send-tokens-btn">
+                  <i class="fas fa-paper-plane"></i>
+                  Send
+                </button>
+                <button class="btn btn-info" id="receive-tokens-btn">
+                  <i class="fas fa-qrcode"></i>
+                  Receive
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- Send Tokens Card -->
+          <div class="card send-card card-3d">
+            <div class="card-header">
+              <h3><i class="fas fa-paper-plane"></i> Send Tokens</h3>
+            </div>
+            <div class="card-body">
+              <form class="send-form" id="send-form">
+                <div class="form-group">
+                  <label for="recipient">Recipient Address</label>
+                  <input type="text" id="recipient" placeholder="Enter wallet address" required>
+                </div>
+                <div class="form-group">
+                  <label for="amount">Amount (OWA)</label>
+                  <input type="number" id="amount" placeholder="0.00" step="0.01" min="0" required>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">
+                  <i class="fas fa-send"></i>
+                  Send Tokens
+                </button>
+              </form>
+            </div>
+          </div>
+        </div>
+
+        <!-- Transaction Status -->
+        <div class="status-bar" id="tx-status-bar" style="display: none;">
+          <div class="status-content">
+            <i class="fas fa-info-circle"></i>
+            <span id="tx-status">Ready</span>
+          </div>
+        </div>
+      </section>
+
+      <!-- Blockchain Explorer -->
+      <section class="section explorer-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <i class="fas fa-cubes"></i>
+            Blockchain Explorer
+          </h2>
+          <div class="section-actions">
+            <button class="btn btn-outline" id="refresh-blocks">
+              <i class="fas fa-sync-alt"></i>
+              Refresh
+            </button>
+            <button class="btn btn-primary" id="mine-block">
+              <i class="fas fa-pickaxe"></i>
+              Mine Block
+            </button>
+          </div>
+        </div>
+
+        <div class="explorer-grid">
+          <!-- Network Info -->
+          <div class="card network-card card-3d">
+            <div class="card-header">
+              <h3><i class="fas fa-network-wired"></i> Network Info</h3>
+            </div>
+            <div class="card-body">
+              <div class="network-stats" id="network-stats">
+                <div class="stat-row">
+                  <span class="stat-label">Block Height:</span>
+                  <span class="stat-value" id="block-height">0</span>
+                </div>
+                <div class="stat-row">
+                  <span class="stat-label">Difficulty:</span>
+                  <span class="stat-value" id="difficulty">1</span>
+                </div>
+                <div class="stat-row">
+                  <span class="stat-label">Network Hash:</span>
+                  <span class="stat-value" id="network-hash">0x...</span>
+                </div>
+                <div class="stat-row">
+                  <span class="stat-label">Last Block:</span>
+                  <span class="stat-value" id="last-block-time">-</span>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Recent Blocks -->
+          <div class="card blocks-card card-3d">
+            <div class="card-header">
+              <h3><i class="fas fa-cube"></i> Recent Blocks</h3>
+            </div>
+            <div class="card-body">
+              <div class="blocks-list" id="blocks-list">
+                <div class="loading-state">
+                  <i class="fas fa-spinner fa-spin"></i>
+                  <p>Loading blocks...</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- DApp Platform -->
+      <section class="section dapp-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <i class="fas fa-code"></i>
+            DApp Platform
+          </h2>
+          <div class="section-actions">
+            <button class="btn btn-primary" id="create-new-dapp">
+              <i class="fas fa-plus"></i>
+              Create DApp
+            </button>
+          </div>
+        </div>
+
+        <div class="dapp-grid">
+          <!-- Create DApp Card -->
+          <div class="card create-dapp-card card-3d">
+            <div class="card-header">
+              <h3><i class="fas fa-rocket"></i> Deploy New DApp</h3>
+            </div>
+            <div class="card-body">
+              <form class="dapp-form" id="dapp-form">
+                <div class="form-group">
+                  <label for="dapp-name">DApp Name</label>
+                  <input type="text" id="dapp-name" placeholder="My Awesome DApp" required>
+                </div>
+                <div class="form-group">
+                  <label for="dapp-description">Description</label>
+                  <textarea id="dapp-description" placeholder="Describe your DApp..." rows="3"></textarea>
+                </div>
+                <div class="form-group">
+                  <label for="dapp-category">Category</label>
+                  <select id="dapp-category" required>
+                    <option value="">Select category</option>
+                    <option value="defi">DeFi</option>
+                    <option value="gaming">Gaming</option>
+                    <option value="social">Social</option>
+                    <option value="utility">Utility</option>
+                    <option value="nft">NFT</option>
+                  </select>
+                </div>
+                <button type="submit" class="btn btn-primary btn-full">
+                  <i class="fas fa-rocket"></i>
+                  Deploy DApp
+                </button>
+              </form>
+            </div>
+          </div>
+
+          <!-- DApp List -->
+          <div class="card dapps-list-card card-3d">
+            <div class="card-header">
+              <h3><i class="fas fa-list"></i> Your DApps</h3>
+            </div>
+            <div class="card-body">
+              <div class="dapps-list" id="dapps-list">
+                <div class="empty-state">
+                  <i class="fas fa-code"></i>
+                  <p>No DApps deployed yet</p>
+                  <small>Create your first DApp to get started</small>
+                </div>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- Transaction History -->
+      <section class="section transactions-section">
+        <div class="section-header">
+          <h2 class="section-title">
+            <i class="fas fa-history"></i>
+            Transaction History
+          </h2>
+          <div class="section-actions">
+            <button class="btn btn-outline" id="refresh-transactions">
+              <i class="fas fa-sync-alt"></i>
+              Refresh
+            </button>
+          </div>
+        </div>
+
+        <div class="card transactions-card card-3d">
+          <div class="card-body">
+            <div class="transactions-list" id="transactions-list">
+              <div class="empty-state">
+                <i class="fas fa-receipt"></i>
+                <p>No transactions yet</p>
+                <small>Your transaction history will appear here</small>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+    </div>
+  </main>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="container">
+      <div class="footer-content">
+        <div class="footer-section">
+          <div class="logo">
+            <i class="fas fa-cube logo-icon"></i>
+            <span class="logo-text">Owami Network</span>
+          </div>
+          <p>Empowering Africa's digital economy through blockchain technology.</p>
+        </div>
+        <div class="footer-section">
+          <h4>Network</h4>
+          <ul>
+            <li><a href="#" id="api-docs-link">API Documentation</a></li>
+            <li><a href="#" id="testnet-guide-link">Testnet Guide</a></li>
+            <li><a href="#" id="investor-demo-link">Investor Demo</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h4>Resources</h4>
+          <ul>
+            <li><a href="#">Whitepaper</a></li>
+            <li><a href="#">Developer Docs</a></li>
+            <li><a href="#">Community</a></li>
+          </ul>
+        </div>
+        <div class="footer-section">
+          <h4>Connect</h4>
+          <div class="social-links">
+            <a href="#"><i class="fab fa-twitter"></i></a>
+            <a href="#"><i class="fab fa-github"></i></a>
+            <a href="#"><i class="fab fa-discord"></i></a>
+            <a href="#"><i class="fab fa-telegram"></i></a>
+          </div>
+        </div>
+      </div>
+      <div class="footer-bottom">
+        <p>&copy; 2024 Owami Network. All rights reserved.</p>
+        <div class="footer-status">
+          <span>Network Status: </span>
+          <span class="status-indicator" id="footer-status">Online</span>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <!-- Modals -->
+  <!-- QR Code Modal -->
+  <div class="modal" id="qr-modal">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>Receive Tokens</h3>
+        <button class="modal-close" id="close-qr-modal">
+          <i class="fas fa-times"></i>
+        </button>
+      </div>
+      <div class="modal-body">
+        <div class="qr-container">
+          <div class="qr-code" id="qr-code">
+            <i class="fas fa-qrcode"></i>
+          </div>
+          <div class="wallet-address-display">
+            <label>Your Wallet Address:</label>
+            <div class="address-copy">
+              <input type="text" id="address-to-copy" readonly>
+              <button class="btn btn-sm btn-outline" id="copy-address">
+                <i class="fas fa-copy"></i>
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Loading Overlay -->
+  <div class="loading-overlay" id="loading-overlay">
+    <div class="loading-content">
+      <div class="loading-spinner"></div>
+      <p id="loading-text">Processing...</p>
+    </div>
+  </div>
+
+  <!-- Toast Notifications -->
+  <div class="toast-container" id="toast-container"></div>
+
+  <script src="js/modern-app.js"></script>
+  <script src="js/3d-background.js"></script>
+</body>
+</html>

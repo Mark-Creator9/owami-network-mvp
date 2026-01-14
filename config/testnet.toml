@@ -1,0 +1,29 @@
+[server]
+host = "0.0.0.0"
+port = 8080
+workers = 4
+
+[database]
+pool_size = 10
+timeout_seconds = 10
+
+[logging]
+level = "info"
+format = "json"
+
+[monitoring]
+health_check_interval = 30
+metrics_port = 9090
+
+[security]
+cors_origins = ["http://localhost:3000", "http://localhost:3002"]
+rate_limiting.requests = 200
+rate_limiting.per_seconds = 60
+
+[consensus]
+consensus_type = "dpos"
+  [consensus.dpos]
+  validator_count = 7
+  block_interval = 3
+  stake_threshold = 1000
+  slashing_penalty = 50

@@ -5,11 +5,11 @@ use axum::{
     response::{IntoResponse, Response},
     Json,
 };
+use chrono::{Duration, Utc};
 use jsonwebtoken::{decode, encode, DecodingKey, EncodingKey, Header, Validation};
 use serde::{Deserialize, Serialize};
 use std::env;
 use uuid::Uuid;
-use chrono::{Utc, Duration};
 // Remove the invalid import
 // use crate::db::models::User;
 
@@ -52,8 +52,15 @@ pub async fn register(
         .expect("valid timestamp")
         .timestamp();
 
-    let claims = Claims { sub: user_id, exp: expiration as usize };
-    let token = match encode(&Header::default(), &claims, &EncodingKey::from_secret(jwt_secret.as_ref())) {
+    let claims = Claims {
+        sub: user_id,
+        exp: expiration as usize,
+    };
+    let token = match encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(jwt_secret.as_ref()),
+    ) {
         Ok(t) => t,
         Err(_) => {
             return (
@@ -63,12 +70,13 @@ pub async fn register(
         }
     };
 
-    (StatusCode::CREATED, Json(serde_json::json!({ "token": token })))
+    (
+        StatusCode::CREATED,
+        Json(serde_json::json!({ "token": token })),
+    )
 }
 
-pub async fn login(
-    Json(_payload): Json<LoginUser>,
-) -> (StatusCode, Json<serde_json::Value>) {
+pub async fn login(Json(_payload): Json<LoginUser>) -> (StatusCode, Json<serde_json::Value>) {
     let user_id = Uuid::new_v4().to_string();
 
     let jwt_secret = match env::var("JWT_SECRET") {
@@ -85,8 +93,15 @@ pub async fn login(
         .expect("valid timestamp")
         .timestamp();
 
-    let claims = Claims { sub: user_id, exp: expiration as usize };
-    let token = match encode(&Header::default(), &claims, &EncodingKey::from_secret(jwt_secret.as_ref())) {
+    let claims = Claims {
+        sub: user_id,
+        exp: expiration as usize,
+    };
+    let token = match encode(
+        &Header::default(),
+        &claims,
+        &EncodingKey::from_secret(jwt_secret.as_ref()),
+    ) {
         Ok(t) => t,
         Err(_) => {
             return (
@@ -99,7 +114,6 @@ pub async fn login(
     (StatusCode::OK, Json(serde_json::json!({ "token": token })))
 }
 
-
 // Middleware
 #[async_trait]
 impl<S> FromRequestParts<S> for Claims
@@ -109,7 +123,10 @@ where
     type Rejection = AuthError;
 
     async fn from_request_parts(parts: &mut Parts, _state: &S) -> Result<Self, Self::Rejection> {
-        let auth_header = parts.headers.get("Authorization").and_then(|header| header.to_str().ok());
+        let auth_header = parts
+            .headers
+            .get("Authorization")
+            .and_then(|header| header.to_str().ok());
 
         if let Some(auth_header) = auth_header {
             if auth_header.starts_with("Bearer ") {
@@ -120,8 +137,12 @@ where
                 };
                 let validation = Validation::default();
 
-                let token_data = decode::<Claims>(token, &DecodingKey::from_secret(jwt_secret.as_ref()), &validation)
-                    .map_err(|_| AuthError::InvalidToken)?;
+                let token_data = decode::<Claims>(
+                    token,
+                    &DecodingKey::from_secret(jwt_secret.as_ref()),
+                    &validation,
+                )
+                .map_err(|_| AuthError::InvalidToken)?;
 
                 return Ok(token_data.claims);
             }

@@ -336,6 +336,21 @@ Authenticate user and receive JWT token.
 }
 ```
 
+### Frontend Integration
+
+The modern frontend includes:
+- **3D Background Animation**: Interactive canvas with floating geometric shapes
+- **3D Card Effects**: Cards with perspective transforms and hover animations  
+- **African-inspired Design**: Cultural patterns and color schemes
+- **Responsive Layout**: Mobile-first design with adaptive components
+- **Real-time Updates**: Automatic data refresh and notifications
+
+**Frontend Files:**
+- `landing/modern-index.html` - Modern UI with 3D effects
+- `landing/css/modern-style.css` - Enhanced styling with 3D transforms
+- `landing/js/modern-app.js` - Updated JavaScript with backend integration
+- `landing/js/3d-background.js` - 3D animation engine
+
 #### POST /api/v1/auth/register
 Register new user account.
 

@@ -1,0 +1,86 @@
+version: '3.8'
+
+services:
+  owami-validator-1:
+    build: .
+    container_name: owami-validator-1
+    ports:
+      - "8080:8080"
+      - "4001:4001"
+    environment:
+      NODE_ID: validator-1
+      PORT: 8080
+      BOOTSTRAP_PEERS: ""
+      RUST_LOG: info
+    volumes:
+      - owami-data-1:/var/data
+    networks:
+      - owami-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  owami-validator-2:
+    build: .
+    container_name: owami-validator-2
+    ports:
+      - "8081:8080"
+      - "4002:4001"
+    environment:
+      NODE_ID: validator-2
+      PORT: 8080
+      BOOTSTRAP_PEERS: "/dns4/owami-validator-1/tcp/4001"
+      RUST_LOG: info
+    volumes:
+      - owami-data-2:/var/data
+    networks:
+      - owami-network
+    depends_on:
+      owami-validator-1:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+  owami-validator-3:
+    build: .
+    container_name: owami-validator-3
+    ports:
+      - "8082:8080"
+      - "4003:4001"
+    environment:
+      NODE_ID: validator-3
+      PORT: 8080
+      BOOTSTRAP_PEERS: "/dns4/owami-validator-1/tcp/4001"
+      RUST_LOG: info
+    volumes:
+      - owami-data-3:/var/data
+    networks:
+      - owami-network
+    depends_on:
+      owami-validator-1:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/api/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+
+volumes:
+  owami-data-1:
+    driver: local
+  owami-data-2:
+    driver: local
+  owami-data-3:
+    driver: local
+
+networks:
+  owami-network:
+    driver: bridge

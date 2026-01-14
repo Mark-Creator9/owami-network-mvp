@@ -1,26 +1,71 @@
 services:
-  # Backend Service
+  # Backend Service (Rust)
   - type: web
-    name: owami-network-backend
+    name: owami-network
     env: rust
-    buildCommand: sqlx migrate run && cargo build --release
-    startCommand: ./target/release/owami-network
+    runtime: docker
+    plan: free
+    region: oregon
+    
+    # Dockerfile configuration
+    dockerfilePath: ./Dockerfile
+    dockerContext: .
+    
+    # Health check
+    healthCheckPath: /health
+    
+    # Environment variables
     envVars:
+      # Server Configuration
       - key: PORT
-        value: 3002
+        value: 8081
+      - key: HOST
+        value: 0.0.0.0
       - key: RUST_LOG
         value: info
-      - key: DATABASE_URL
-        fromSecret: AIVEN_DATABASE_URL
+        
+      # Production mode
+      - key: NODE_ENV
+        value: production
+        
+      # CORS (for frontend access)
+      - key: CORS_ORIGINS
+        value: https://owami-network.onrender.com,https://localhost:8081
+      - key: CORS_ALLOW_CREDENTIALS
+        value: true
+        
+      # Rate Limiting
+      - key: RATE_LIMIT_REQUESTS
+        value: 100
+      - key: RATE_LIMIT_WINDOW
+        value: 60
+        
+      # JWT Secret (generate your own)
+      - key: JWT_SECRET
+        generateValue: true
+        
+      # Database (using RocksDB - local storage)
+      - key: DATA_DIR
+        value: ./data
+        
+      # WASM Configuration
+      - key: WASM_CACHE_SIZE
+        value: 100MB
+      - key: WASM_GAS_LIMIT
+        value: 1000000
+        
+      # Faucet Configuration
+      - key: FAUCET_AMOUNT
+        value: 1000
+      - key: FAUCET_RATE_LIMIT
+        value: 86400  # 24 hours in seconds
+        
+    # Scaling
+    numInstances: 1
     
-  # Frontend Service (Static Site)
-  - type: web
-    name: owami-network-frontend
-    env: static
-    buildCommand: echo "No build needed for static site"
-    staticPublishPath: ./landing
-    routes:
-      - type: rewrite
-        source: /api/*
-        destination: https://owami-network-backend.onrender.com/api/$1
+    # Disk storage for RocksDB
+    disk:
+      name: data
+      mountPath: /app/data
+      sizeGB: 10
 

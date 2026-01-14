@@ -1,5 +1,5 @@
-use chrono::{DateTime, Utc, Duration};
-use serde::{Serialize, Deserialize};
+use chrono::{DateTime, Duration, Utc};
+use serde::{Deserialize, Serialize};
 use std::collections::HashMap;
 
 /// Represents a vesting schedule for an investor
@@ -22,7 +22,8 @@ impl VestingSchedule {
         if elapsed >= self.vesting_duration {
             return self.total_amount - self.claimed_amount;
         }
-        let vested = (self.total_amount as f64) * (elapsed.num_seconds() as f64) / (self.vesting_duration.num_seconds() as f64);
+        let vested = (self.total_amount as f64) * (elapsed.num_seconds() as f64)
+            / (self.vesting_duration.num_seconds() as f64);
         let vested_u64 = vested as u64;
         if vested_u64 > self.claimed_amount {
             vested_u64 - self.claimed_amount

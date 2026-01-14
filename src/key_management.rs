@@ -1,11 +1,11 @@
+use crate::audit_log;
+use anyhow::{anyhow, Result};
 use ed25519_dalek::{SigningKey, VerifyingKey};
 use rand::rngs::OsRng;
 use std::env;
 use std::fs;
 use std::path::Path;
-use anyhow::{Result, anyhow};
 use tracing::info;
-use crate::audit_log;
 
 /// Secure key management system for production use
 pub struct KeyManager {
@@ -19,12 +19,12 @@ impl KeyManager {
         let path = key_path.unwrap_or_else(|| {
             env::var("SIGNING_KEY_PATH").unwrap_or_else(|_| "./keys/validator.key".to_string())
         });
-        
+
         // Ensure directory exists
         if let Some(parent) = Path::new(&path).parent() {
             fs::create_dir_all(parent)?;
         }
-        
+
         Ok(KeyManager {
             signing_key: None,
             key_path: path,
@@ -41,7 +41,7 @@ impl KeyManager {
         if Path::new(&self.key_path).exists() {
             info!("Loading signing key from: {}", self.key_path);
             let key_bytes = fs::read(&self.key_path)?;
-            
+
             if key_bytes.len() != 32 {
                 audit_log::log_key_management_event(
                     "Key load failed".to_string(),
@@ -51,20 +51,20 @@ impl KeyManager {
                 )?;
                 return Err(anyhow!("Invalid key length in file"));
             }
-            
+
             let mut key_array = [0u8; 32];
             key_array.copy_from_slice(&key_bytes);
             let signing_key = SigningKey::from_bytes(&key_array);
-            
+
             self.signing_key = Some(signing_key.clone());
-            
+
             audit_log::log_key_management_event(
                 "Key loaded".to_string(),
                 format!("Signing key loaded from: {}", self.key_path),
                 "success".to_string(),
                 None,
             )?;
-            
+
             return Ok(signing_key);
         }
 
@@ -72,19 +72,19 @@ impl KeyManager {
         info!("Generating new signing key");
         let mut rng = OsRng;
         let signing_key = SigningKey::generate(&mut rng);
-        
+
         // Save to file securely
         self.save_key(&signing_key)?;
-        
+
         self.signing_key = Some(signing_key.clone());
-        
+
         audit_log::log_key_management_event(
             "Key generated".to_string(),
             format!("New signing key generated and saved to: {}", self.key_path),
             "success".to_string(),
             None,
         )?;
-        
+
         Ok(signing_key)
     }
 
@@ -92,7 +92,7 @@ impl KeyManager {
     fn save_key(&self, signing_key: &SigningKey) -> Result<()> {
         let key_bytes = signing_key.to_bytes();
         fs::write(&self.key_path, key_bytes)?;
-        
+
         // Set secure permissions (Unix-like systems)
         #[cfg(unix)]
         {
@@ -101,16 +101,16 @@ impl KeyManager {
             perms.set_mode(0o600); // Read/write for owner only
             fs::set_permissions(&self.key_path, perms)?;
         }
-        
+
         info!("Signing key saved to: {}", self.key_path);
-        
+
         audit_log::log_key_management_event(
             "Key saved".to_string(),
             format!("Signing key saved to secure storage: {}", self.key_path),
             "success".to_string(),
             None,
         )?;
-        
+
         Ok(())
     }
 
@@ -130,38 +130,39 @@ impl KeyManager {
         info!("Rotating signing key");
         let mut rng = OsRng;
         let new_signing_key = SigningKey::generate(&mut rng);
-        
+
         self.save_key(&new_signing_key)?;
         self.signing_key = Some(new_signing_key.clone());
-        
+
         audit_log::log_key_management_event(
             "Key rotated".to_string(),
             "Signing key rotated for security purposes".to_string(),
             "success".to_string(),
             None,
         )?;
-        
+
         Ok(new_signing_key)
     }
 
     /// Backup key to secure location
     pub fn backup_key(&self, backup_path: &str) -> Result<()> {
-        let signing_key = self.signing_key
+        let signing_key = self
+            .signing_key
             .as_ref()
             .ok_or_else(|| anyhow!("No key loaded"))?;
-        
+
         let key_bytes = signing_key.to_bytes();
         fs::write(backup_path, key_bytes)?;
-        
+
         info!("Key backed up to: {}", backup_path);
-        
+
         audit_log::log_key_management_event(
             "Key backup".to_string(),
             format!("Signing key backed up to: {}", backup_path),
             "success".to_string(),
             None,
         )?;
-        
+
         Ok(())
     }
 }
@@ -180,26 +181,36 @@ mod tests {
     #[test]
     fn test_key_manager_creation() -> Result<()> {
         let temp_dir = tempdir()?;
-        let key_path = temp_dir.path().join("test.key").to_str().unwrap().to_string();
-        
+        let key_path = temp_dir
+            .path()
+            .join("test.key")
+            .to_str()
+            .unwrap()
+            .to_string();
+
         let mut manager = KeyManager::new(Some(key_path.clone()))?;
         let signing_key = manager.get_signing_key()?;
-        
+
         assert!(Path::new(&key_path).exists());
         assert_eq!(signing_key.to_bytes().len(), 32);
-        
+
         Ok(())
     }
 
     #[test]
     fn test_key_rotation() -> Result<()> {
         let temp_dir = tempdir()?;
-        let key_path = temp_dir.path().join("rotate.key").to_str().unwrap().to_string();
-        
+        let key_path = temp_dir
+            .path()
+            .join("rotate.key")
+            .to_str()
+            .unwrap()
+            .to_string();
+
         let mut manager = KeyManager::new(Some(key_path.clone()))?;
         let original_key = manager.get_signing_key()?;
         let rotated_key = manager.rotate_key()?;
-        
+
         assert_ne!(original_key.to_bytes(), rotated_key.to_bytes());
         Ok(())
     }

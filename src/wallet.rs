@@ -1,8 +1,8 @@
-use ed25519_dalek::{Signer, Verifier, Signature};
-use hex;
+use crate::audit_log;
 use crate::key_management::KeyManager;
 use anyhow::Result;
-use crate::audit_log;
+use ed25519_dalek::{Signature, Signer, Verifier};
+use hex;
 use tempfile;
 
 pub struct Wallet {
@@ -13,14 +13,14 @@ impl Wallet {
     pub fn new() -> Result<Self> {
         let mut key_manager = KeyManager::new(None)?;
         key_manager.load_or_generate_key()?;
-        
+
         audit_log::log_key_management_event(
             "Wallet created".to_string(),
             "New wallet created with generated key".to_string(),
             "success".to_string(),
             None,
         )?;
-        
+
         Ok(Wallet { key_manager })
     }
 
@@ -34,7 +34,7 @@ impl Wallet {
             );
             anyhow::anyhow!("Invalid private key: {}", e)
         })?;
-        
+
         if bytes.len() != 32 {
             let _ = audit_log::log_security_event(
                 "Invalid private key length".to_string(),
@@ -44,21 +44,21 @@ impl Wallet {
             );
             return Err(anyhow::anyhow!("Invalid private key length"));
         }
-        
+
         let temp_dir = tempfile::tempdir()?;
         let temp_key_path = temp_dir.path().join("temp.key");
         std::fs::write(&temp_key_path, &bytes)?;
-        
+
         let mut key_manager = KeyManager::new(Some(temp_key_path.to_str().unwrap().to_string()))?;
         key_manager.load_or_generate_key()?;
-        
+
         audit_log::log_key_management_event(
             "Wallet created from private key".to_string(),
             "Wallet created from provided private key".to_string(),
             "success".to_string(),
             None,
         )?;
-        
+
         Ok(Wallet { key_manager })
     }
 
@@ -70,21 +70,21 @@ impl Wallet {
     pub fn private_key(&mut self) -> Result<String> {
         let signing_key = self.key_manager.get_signing_key()?;
         let private_key = hex::encode(signing_key.to_bytes());
-        
+
         audit_log::log_key_management_event(
             "Private key accessed".to_string(),
             "Private key retrieved from wallet".to_string(),
             "success".to_string(),
             None,
         )?;
-        
+
         Ok(private_key)
     }
 
     pub fn sign(&mut self, message: &[u8]) -> Result<Vec<u8>> {
         let signing_key = self.key_manager.get_signing_key()?;
         let signature = signing_key.sign(message);
-        
+
         audit_log::log_transaction_event(
             "Message signed".to_string(),
             format!("Signed message of length: {}", message.len()),
@@ -92,24 +92,24 @@ impl Wallet {
             None,
             None,
         )?;
-        
+
         Ok(signature.to_bytes().to_vec())
     }
 
     pub fn verify(&mut self, message: &[u8], signature: &[u8]) -> Result<bool> {
         let verifying_key = self.key_manager.get_verifying_key()?;
-        let signature = Signature::from_slice(signature)
-            .map_err(|e| {
-                let _ = audit_log::log_security_event(
-                    "Signature verification failed".to_string(),
-                    format!("Invalid signature format: {}", e),
-                    "failure".to_string(),
-                    None,
-                );
-                anyhow::anyhow!("Invalid signature: {}", e)
-            })?;
-        
-        let result = verifying_key.verify(message, &signature)
+        let signature = Signature::from_slice(signature).map_err(|e| {
+            let _ = audit_log::log_security_event(
+                "Signature verification failed".to_string(),
+                format!("Invalid signature format: {}", e),
+                "failure".to_string(),
+                None,
+            );
+            anyhow::anyhow!("Invalid signature: {}", e)
+        })?;
+
+        let result = verifying_key
+            .verify(message, &signature)
             .map_err(|e| {
                 let _ = audit_log::log_security_event(
                     "Signature verification failed".to_string(),
@@ -120,7 +120,7 @@ impl Wallet {
                 anyhow::anyhow!("Verification failed: {}", e)
             })
             .map(|_| true);
-        
+
         if result.is_ok() {
             audit_log::log_security_event(
                 "Signature verified".to_string(),
@@ -129,7 +129,7 @@ impl Wallet {
                 None,
             )?;
         }
-        
+
         result
     }
 }
@@ -138,9 +138,9 @@ impl Wallet {
 mod tests {
     use super::*;
     // use tempfile::tempdir; // Unused import
+    use ed25519_dalek::SigningKey;
     use rand::rngs::OsRng;
     use rand::RngCore;
-    use ed25519_dalek::SigningKey;
 
     #[test]
     fn test_wallet_creation() -> Result<()> {
@@ -157,9 +157,12 @@ mod tests {
         rng.fill_bytes(&mut secret_key_bytes);
         let signing_key = SigningKey::from_bytes(&secret_key_bytes);
         let private_key = hex::encode(signing_key.to_bytes());
-        
+
         let mut wallet = Wallet::from_private_key(&private_key)?;
-        assert_eq!(wallet.address()?, hex::encode(signing_key.verifying_key().to_bytes()));
+        assert_eq!(
+            wallet.address()?,
+            hex::encode(signing_key.verifying_key().to_bytes())
+        );
         Ok(())
     }
 
@@ -173,7 +176,7 @@ mod tests {
         let mut wallet = Wallet::new()?;
         let message = b"test message";
         let signature = wallet.sign(message)?;
-        
+
         assert!(wallet.verify(message, &signature)?);
         Ok(())
     }

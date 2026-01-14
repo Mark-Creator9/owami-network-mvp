@@ -1,8 +1,4 @@
-use owami_network::{
-    Transaction,
-    vesting::VestingManager,
-    crypto_utils
-};
+use owami_network::{crypto_utils, vesting::VestingManager, Transaction};
 
 #[test]
 fn test_token_transfer() -> Result<(), Box<dyn std::error::Error>> {
@@ -14,14 +10,9 @@ fn test_token_transfer() -> Result<(), Box<dyn std::error::Error>> {
     let bob_addr = hex::encode(bob_public_key.to_bytes());
 
     // Create transaction using the constructor
-    let mut tx = Transaction::new(
-        alice_addr,
-        bob_addr,
-        100,
-        None,
-    );
+    let mut tx = Transaction::new(alice_addr, bob_addr, 100, None);
     tx.sign(&alice_key)?;
-    
+
     // Use the correct verification method
     assert!(tx.verify());
     Ok(())
@@ -31,5 +22,5 @@ fn test_token_transfer() -> Result<(), Box<dyn std::error::Error>> {
 fn test_vesting_operations() {
     let manager = VestingManager::default();
     // Access the public field directly
-    assert!(manager.schedules.is_empty()); 
+    assert!(manager.schedules.is_empty());
 }

@@ -2,7 +2,7 @@
 name = "owami-network"
 version = "0.1.0"
 edition = "2021"
-default-run = "owami-network"
+default-run = "owami-server"
 
 [dependencies]
 # Authentication
@@ -64,16 +64,16 @@ tokio-test = "0.4"
 criterion = "0.5"
 
 [profile.release]
-opt-level = "s"
-lto = true
-codegen-units = 1
+opt-level = 3
+lto = "thin"
+codegen-units = 16
 panic = "abort"
-strip = true
+strip = false
 
 [[bin]]
 name = "generate-key"
 path = "src/bin/generate_key.rs"
 
 [[bin]]
-name = "owami-network"
-path = "src/main_simple.rs"
+name = "owami-server"
+path = "src/main_simple_enhanced.rs"

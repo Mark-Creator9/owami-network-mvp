@@ -1,4 +1,4 @@
-use rocksdb::{DB, Options};
+use rocksdb::{Options, DB};
 use std::sync::Arc;
 
 pub struct Database {

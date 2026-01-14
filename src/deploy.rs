@@ -3,17 +3,19 @@ use axum::{
     http::StatusCode,
     response::Response,
 };
+use base64::Engine as _;
 use serde::{Deserialize, Serialize};
 use std::sync::{Arc, Mutex as StdMutex};
-use base64::Engine as _;
 
 // Import our modules
 use crate::{
-    wasm_runtime::{WasmEngine, ContractStorage},
-    contract_registry::{ContractRegistry, DeploymentRequest, CallRequest, CallResponse, DeployedContract},
-    compiler::CompilationService,
     blockchain::Blockchain,
+    compiler::CompilationService,
     config::AppConfig,
+    contract_registry::{
+        CallRequest, CallResponse, ContractRegistry, DeployedContract, DeploymentRequest,
+    },
+    wasm_runtime::{ContractStorage, WasmEngine},
 };
 
 /// Global deployment service
@@ -43,10 +45,13 @@ impl DeploymentService {
     pub fn new(config: AppConfig) -> Self {
         let blockchain = Arc::new(Blockchain::new(&config));
         let storage = Arc::new(StdMutex::new(ContractStorage::new()));
-        let wasm_engine = Arc::new(StdMutex::new(WasmEngine::new(blockchain.clone(), storage).unwrap()));
+        let wasm_engine = Arc::new(StdMutex::new(
+            WasmEngine::new(blockchain.clone(), storage).unwrap(),
+        ));
         let registry = ContractRegistry::new(wasm_engine.clone());
-        let compilation_service = CompilationService::new().unwrap_or_else(|_| CompilationService::new().unwrap());
-        
+        let compilation_service =
+            CompilationService::new().unwrap_or_else(|_| CompilationService::new().unwrap());
+
         Self {
             registry,
             wasm_engine,
@@ -69,7 +74,7 @@ impl DeploymentService {
             constructor_args: None,
             gas_limit: Some(1_000_000),
         };
-        
+
         self.registry
             .deploy_contract(request)
             .await
@@ -85,20 +90,19 @@ impl DeploymentService {
         contract_type: String,
     ) -> Result<DeployedContract, String> {
         let wasm_bytes = match language.to_lowercase().as_str() {
-            "rust" | "wasm" => {
-                self.compilation_service
-                    .compile_rust_to_wasm(&source_code, None)
-                    .map_err(|e| e.to_string())?
-            }
-            "solidity" => {
-                self.compilation_service
-                    .compile_solidity_to_wasm(&source_code, None)
-                    .map_err(|e| e.to_string())?
-            }
+            "rust" | "wasm" => self
+                .compilation_service
+                .compile_rust_to_wasm(&source_code, None)
+                .map_err(|e| e.to_string())?,
+            "solidity" => self
+                .compilation_service
+                .compile_solidity_to_wasm(&source_code, None)
+                .map_err(|e| e.to_string())?,
             _ => return Err("Unsupported language. Use 'rust' or 'solidity'".to_string()),
         };
-        
-        self.deploy_wasm_contract(wasm_bytes, creator, contract_type).await
+
+        self.deploy_wasm_contract(wasm_bytes, creator, contract_type)
+            .await
     }
 
     /// Call a function on a deployed contract
@@ -117,7 +121,7 @@ impl DeploymentService {
             value: None,
             gas_limit: Some(1_000_000),
         };
-        
+
         self.registry
             .call_contract(request)
             .await
@@ -178,7 +182,7 @@ pub async fn upload_contract(
     // Simplified file upload - in practice you'd handle multipart form data
     let service = state.deployment_service.lock().unwrap();
     let stats = service.registry.get_statistics();
-    
+
     Ok(Response::builder()
         .status(StatusCode::OK)
         .body(serde_json::to_string(&stats).unwrap())
@@ -191,17 +195,21 @@ pub async fn deploy_wasm_contract(
     Json(request): Json<WasmContractRequest>,
 ) -> Result<Response<String>, (StatusCode, String)> {
     let mut service = state.deployment_service.lock().unwrap();
-    
+
     // Decode base64 WASM bytecode
     let wasm_bytes = base64::engine::general_purpose::STANDARD
         .decode(&request.wasm_bytecode)
-        .map_err(|_| (StatusCode::BAD_REQUEST, "Invalid base64 WASM bytecode".to_string()))?;
-    
-    match service.deploy_wasm_contract(
-        wasm_bytes,
-        request.creator,
-        request.contract_type,
-    ).await {
+        .map_err(|_| {
+            (
+                StatusCode::BAD_REQUEST,
+                "Invalid base64 WASM bytecode".to_string(),
+            )
+        })?;
+
+    match service
+        .deploy_wasm_contract(wasm_bytes, request.creator, request.contract_type)
+        .await
+    {
         Ok(contract) => {
             let response = DeploymentResponse {
                 success: true,
@@ -209,7 +217,7 @@ pub async fn deploy_wasm_contract(
                 message: "Contract deployed successfully".to_string(),
                 contract: Some(contract),
             };
-            
+
             Ok(Response::builder()
                 .status(StatusCode::OK)
                 .body(serde_json::to_string(&response).unwrap())
@@ -222,7 +230,7 @@ pub async fn deploy_wasm_contract(
                 message: e,
                 contract: None,
             };
-            
+
             Ok(Response::builder()
                 .status(StatusCode::INTERNAL_SERVER_ERROR)
                 .body(serde_json::to_string(&response).unwrap())
@@ -237,13 +245,16 @@ pub async fn deploy_contract(
     Json(request): Json<SourceContractRequest>,
 ) -> Result<Response<String>, (StatusCode, String)> {
     let mut service = state.deployment_service.lock().unwrap();
-    
-    match service.deploy_from_source(
-        request.source_code,
-        request.language,
-        request.creator,
-        request.contract_type,
-    ).await {
+
+    match service
+        .deploy_from_source(
+            request.source_code,
+            request.language,
+            request.creator,
+            request.contract_type,
+        )
+        .await
+    {
         Ok(contract) => {
             let response = DeploymentResponse {
                 success: true,
@@ -251,7 +262,7 @@ pub async fn deploy_contract(
                 message: "Contract deployed successfully".to_string(),
                 contract: Some(contract),
             };
-            
+
             Ok(Response::builder()
                 .status(StatusCode::OK)
                 .body(serde_json::to_string(&response).unwrap())
@@ -264,7 +275,7 @@ pub async fn deploy_contract(
                 message: e,
                 contract: None,
             };
-            
+
             Ok(Response::builder()
                 .status(StatusCode::INTERNAL_SERVER_ERROR)
                 .body(serde_json::to_string(&response).unwrap())
@@ -279,13 +290,16 @@ pub async fn call_contract(
     Json(request): Json<ContractCallRequest>,
 ) -> Result<Response<String>, (StatusCode, String)> {
     let mut service = state.deployment_service.lock().unwrap();
-    
-    match service.call_contract(
-        request.contract_address,
-        request.function_name,
-        request.args,
-        request.caller,
-    ).await {
+
+    match service
+        .call_contract(
+            request.contract_address,
+            request.function_name,
+            request.args,
+            request.caller,
+        )
+        .await
+    {
         Ok(response) => {
             let contract_response = ContractCallResponse {
                 success: response.success,
@@ -293,7 +307,7 @@ pub async fn call_contract(
                 gas_used: response.gas_used,
                 error: response.error,
             };
-            
+
             Ok(Response::builder()
                 .status(StatusCode::OK)
                 .body(serde_json::to_string(&contract_response).unwrap())
@@ -306,7 +320,7 @@ pub async fn call_contract(
                 gas_used: 0,
                 error: Some(e),
             };
-            
+
             Ok(Response::builder()
                 .status(StatusCode::INTERNAL_SERVER_ERROR)
                 .body(serde_json::to_string(&response).unwrap())
@@ -322,7 +336,7 @@ pub async fn deploy_contract_file(
     // Simplified - in practice you'd handle file uploads
     let service = state.deployment_service.lock().unwrap();
     let stats = service.registry.get_statistics();
-    
+
     Ok(Response::builder()
         .status(StatusCode::OK)
         .body(serde_json::to_string(&stats).unwrap())
@@ -335,7 +349,7 @@ pub async fn get_contract(
     address: String,
 ) -> Result<Response<String>, (StatusCode, String)> {
     let service = state.deployment_service.lock().unwrap();
-    
+
     if let Some(contract) = service.registry.get_contract(&address) {
         Ok(Response::builder()
             .status(StatusCode::OK)
@@ -355,7 +369,7 @@ pub async fn list_contracts(
 ) -> Result<Response<String>, (StatusCode, String)> {
     let service = state.deployment_service.lock().unwrap();
     let contracts = service.registry.list_contracts();
-    
+
     Ok(Response::builder()
         .status(StatusCode::OK)
         .body(serde_json::to_string(&contracts).unwrap())
@@ -368,7 +382,7 @@ pub async fn get_contract_storage(
     address: String,
 ) -> Result<Response<String>, (StatusCode, String)> {
     let service = state.deployment_service.lock().unwrap();
-    
+
     if let Some(storage) = service.registry.get_contract_storage(&address) {
         Ok(Response::builder()
             .status(StatusCode::OK)
@@ -388,7 +402,7 @@ pub async fn get_deployment_stats(
 ) -> Result<Response<String>, (StatusCode, String)> {
     let service = state.deployment_service.lock().unwrap();
     let stats = service.registry.get_statistics();
-    
+
     Ok(Response::builder()
         .status(StatusCode::OK)
         .body(serde_json::to_string(&stats).unwrap())
@@ -401,40 +415,42 @@ pub async fn compile_contract(
     Json(request): Json<SourceContractRequest>,
 ) -> Result<Response<String>, (StatusCode, String)> {
     let service = state.deployment_service.lock().unwrap();
-    
+
     let result = match request.language.to_lowercase().as_str() {
-        "rust" | "wasm" => {
-            service.compilation_service
-                .compile_rust_to_wasm(&request.source_code, None)
-        }
-        "solidity" => {
-            service.compilation_service
-                .compile_solidity_to_wasm(&request.source_code, None)
-        }
+        "rust" | "wasm" => service
+            .compilation_service
+            .compile_rust_to_wasm(&request.source_code, None),
+        "solidity" => service
+            .compilation_service
+            .compile_solidity_to_wasm(&request.source_code, None),
         _ => return Err((StatusCode::BAD_REQUEST, "Unsupported language".to_string())),
     };
-    
+
     match result {
         Ok(wasm_bytes) => {
             let wasm_base64 = base64::engine::general_purpose::STANDARD.encode(&wasm_bytes);
             Ok(Response::builder()
                 .status(StatusCode::OK)
-                .body(serde_json::to_string(&serde_json::json!({
-                    "success": true,
-                    "wasm_bytecode": wasm_base64,
-                    "size": wasm_bytes.len()
-                })).unwrap())
+                .body(
+                    serde_json::to_string(&serde_json::json!({
+                        "success": true,
+                        "wasm_bytecode": wasm_base64,
+                        "size": wasm_bytes.len()
+                    }))
+                    .unwrap(),
+                )
                 .unwrap())
         }
-        Err(e) => {
-            Ok(Response::builder()
-                .status(StatusCode::INTERNAL_SERVER_ERROR)
-                .body(serde_json::to_string(&serde_json::json!({
+        Err(e) => Ok(Response::builder()
+            .status(StatusCode::INTERNAL_SERVER_ERROR)
+            .body(
+                serde_json::to_string(&serde_json::json!({
                     "success": false,
                     "error": e.to_string()
-                })).unwrap())
-                .unwrap())
-        }
+                }))
+                .unwrap(),
+            )
+            .unwrap()),
     }
 }
 
