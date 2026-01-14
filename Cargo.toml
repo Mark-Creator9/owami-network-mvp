@@ -9,7 +9,7 @@ default-run = "owami-server"
 jsonwebtoken = "8.3"
 bcrypt = "0.15"
 
-# File utilities (keep for DApp file handling)
+# File utilities
 which = "6.0"
 sanitize-filename = "0.5"
 tempfile = "3.10"
@@ -36,9 +36,9 @@ lru_time_cache = "0.11"
 # Database
 rocksdb = "0.21"
 
-# P2P Networking
-libp2p = { version = "0.53", features = ["tcp", "gossipsub", "identify", "kad", "noise", "yamux"] }
-libp2p-core = "0.39"
+# REMOVED P2P Networking for Render deployment
+# libp2p = { version = "0.53", features = ["tcp", "gossipsub", "identify", "kad", "noise", "yamux"] }
+# libp2p-core = "0.39"
 
 # Logging
 tracing = "0.1"
@@ -48,9 +48,9 @@ uuid = { version = "1.0", features = ["v4"] }
 lazy_static = "1.4"
 toml = "0.8"
 
-# WASM Runtime (minimal - no libclang required)
-# wasmparser = "0.201"  # Removed for deployment
-# base64 = "0.22"  # Already imported by other crates
+# Removed WASM Runtime for Render deployment
+# wasmparser = "0.201"
+# base64 = "0.22"
 
 [dev-dependencies]
 tokio-test = "0.4"
