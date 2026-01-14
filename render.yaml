@@ -1,14 +1,14 @@
 services:
-  # Backend Service (Rust with Docker)
+  # Backend Service (Rust - Native, no Docker)
   - type: web
     name: owami-network
-    env: docker
+    env: rust
     plan: free
     region: oregon
     
-    # Dockerfile configuration
-    dockerfilePath: ./Dockerfile
-    dockerContext: .
+    # Build configuration - use no-wasm version to avoid libclang
+    buildCommand: cp Cargo-no-wasm.toml Cargo.toml && cargo build --release --bin owami-server
+    startCommand: ./target/release/owami-server
     
     # Health check
     healthCheckPath: /health

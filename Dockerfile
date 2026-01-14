@@ -1,16 +1,13 @@
-# Owami Network Testnet MVP - Production Deployment
+# Owami Network Testnet MVP - Simplified Deployment (No WASM dependencies)
 
 # ========= Build stage =========
 FROM rust:1.77-slim as builder
 
-# Install build dependencies including libclang for bindgen
+# Install build dependencies (without libclang since we removed WASM deps)
 RUN apt-get update && apt-get install -y \
     build-essential \
     pkg-config \
     libssl-dev \
-    clang \
-    libclang-dev \
-    llvm-dev \
     ca-certificates \
     curl \
  && rm -rf /var/lib/apt/lists/*
@@ -39,7 +36,7 @@ RUN apt-get update && apt-get install -y \
  && rm -rf /var/lib/apt/lists/*
 
 # Create data directory for RocksDB
-RUN mkdir -p /app/data
+RUN mkdir -p /app/data /app/data/rocksdb
 
 WORKDIR /app
 
@@ -61,9 +58,6 @@ ENV HOST=0.0.0.0
 ENV RUST_LOG=info
 
 EXPOSE 8081
-
-# Create data directory on runtime
-RUN mkdir -p /app/data/rocksdb
 
 # Healthcheck against Owami health endpoint
 HEALTHCHECK --interval=30s --timeout=5s --retries=3 \

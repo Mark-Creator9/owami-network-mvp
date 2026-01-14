@@ -1,0 +1,72 @@
+[package]
+name = "owami-network"
+version = "0.1.0"
+edition = "2021"
+default-run = "owami-server"
+
+[dependencies]
+# Authentication
+jsonwebtoken = "8.3"
+bcrypt = "0.15"
+
+# File utilities (keep for DApp file handling)
+which = "6.0"
+sanitize-filename = "0.5"
+tempfile = "3.10"
+
+# Core blockchain
+ed25519-dalek = { version = "2.1", default-features = false, features = ["rand_core"] }
+blake3 = "1.5"
+rand = "0.8"
+hex = "0.4"
+serde = { version = "1.0", features = ["derive"] }
+serde_json = "1.0"
+chrono = { version = "0.4", features = ["serde", "clock"], default-features = false }
+bincode = "1.3"
+async-trait = "0.1"
+
+# Web server
+axum = "0.7"
+tokio = { version = "1.0", features = ["rt-multi-thread", "macros", "net"] }
+tower = { version = "0.4", features = ["util"] }
+tower-http = { version = "0.5", features = ["cors", "fs", "limit"] }
+governor = "0.6"
+lru_time_cache = "0.11"
+
+# Database
+rocksdb = "0.21"
+
+# P2P Networking
+libp2p = { version = "0.53", features = ["tcp", "gossipsub", "identify", "kad", "noise", "yamux"] }
+libp2p-core = "0.39"
+
+# Logging
+tracing = "0.1"
+tracing-subscriber = { version = "0.3", default-features = false, features = ["fmt"] }
+anyhow = "1.0"
+uuid = { version = "1.0", features = ["v4"] }
+lazy_static = "1.4"
+toml = "0.8"
+
+# WASM Runtime (without bindgen to avoid libclang requirement)
+wasmparser = "0.201"
+base64 = "0.22"
+
+[dev-dependencies]
+tokio-test = "0.4"
+criterion = "0.5"
+
+[profile.release]
+opt-level = 3
+lto = "thin"
+codegen-units = 16
+panic = "abort"
+strip = false
+
+[[bin]]
+name = "generate-key"
+path = "src/bin/generate_key.rs"
+
+[[bin]]
+name = "owami-server"
+path = "src/main_simple_enhanced.rs"
