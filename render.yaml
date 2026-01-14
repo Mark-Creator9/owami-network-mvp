@@ -1,9 +1,8 @@
 services:
-  # Backend Service (Rust)
+  # Backend Service (Rust with Docker)
   - type: web
     name: owami-network
-    env: rust
-    runtime: docker
+    env: docker
     plan: free
     region: oregon
     
@@ -44,28 +43,11 @@ services:
       - key: JWT_SECRET
         generateValue: true
         
-      # Database (using RocksDB - local storage)
-      - key: DATA_DIR
-        value: ./data
-        
-      # WASM Configuration
-      - key: WASM_CACHE_SIZE
-        value: 100MB
-      - key: WASM_GAS_LIMIT
-        value: 1000000
-        
       # Faucet Configuration
       - key: FAUCET_AMOUNT
         value: 1000
       - key: FAUCET_RATE_LIMIT
         value: 86400  # 24 hours in seconds
-        
+
     # Scaling
     numInstances: 1
-    
-    # Disk storage for RocksDB
-    disk:
-      name: data
-      mountPath: /app/data
-      sizeGB: 10
-
