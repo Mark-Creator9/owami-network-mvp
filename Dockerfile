@@ -1,16 +1,18 @@
-# Owami Network Testnet MVP - Simplified Deployment (No WASM dependencies)
+# Owami Network Testnet MVP - Fixed for Render deployment
 
 # ========= Build stage =========
 FROM rust:1.77-slim as builder
 
-# Install build dependencies (without libclang since we removed WASM deps)
+# Install build dependencies INCLUDING libclang for bindgen
 RUN apt-get update && apt-get install -y \
     build-essential \
     pkg-config \
     libssl-dev \
+    libclang-dev \
+    clang \
     ca-certificates \
     curl \
- && rm -rf /var/lib/apt/lists/*
+  && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
@@ -33,7 +35,7 @@ FROM debian:bullseye-slim
 RUN apt-get update && apt-get install -y \
     ca-certificates \
     curl \
- && rm -rf /var/lib/apt/lists/*
+  && rm -rf /var/lib/apt/lists/*
 
 # Create data directory for RocksDB
 RUN mkdir -p /app/data /app/data/rocksdb

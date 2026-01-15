@@ -1,14 +1,13 @@
 services:
-  # Backend Service (Rust - Native, no Docker)
+  # Backend Service (Docker deployment)
   - type: web
     name: owami-network
-    env: rust
+    env: docker
     plan: free
     region: oregon
     
-    # Build configuration - Cargo.toml now has no WASM deps
-    buildCommand: cargo build --release --bin owami-server
-    startCommand: ./target/release/owami-server
+    # Docker configuration
+    dockerfilePath: ./Dockerfile
     
     # Health check
     healthCheckPath: /health
@@ -22,27 +21,27 @@ services:
         value: 0.0.0.0
       - key: RUST_LOG
         value: info
-        
+         
       # Production mode
       - key: NODE_ENV
         value: production
-        
+         
       # CORS (for frontend access)
       - key: CORS_ORIGINS
         value: https://owami-network.onrender.com,https://localhost:8081
       - key: CORS_ALLOW_CREDENTIALS
         value: true
-        
+         
       # Rate Limiting
       - key: RATE_LIMIT_REQUESTS
         value: 100
       - key: RATE_LIMIT_WINDOW
         value: 60
-        
+         
       # JWT Secret (generate your own)
       - key: JWT_SECRET
         generateValue: true
-        
+         
       # Faucet Configuration
       - key: FAUCET_AMOUNT
         value: 1000
