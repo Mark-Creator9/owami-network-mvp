@@ -1,0 +1,52 @@
+services:
+  # Backend Service (Docker deployment - No RocksDB version)
+  - type: web
+    name: owami-network-no-rocksdb
+    env: docker
+    plan: free
+    region: oregon
+    
+    # Docker configuration - use the no-rocksdb Dockerfile
+    dockerfilePath: ./Dockerfile-no-rocksdb
+    
+    # Health check
+    healthCheckPath: /health
+    
+    # Environment variables
+    envVars:
+      # Server Configuration
+      - key: PORT
+        value: 8081
+      - key: HOST
+        value: 0.0.0.0
+      - key: RUST_LOG
+        value: info
+         
+      # Production mode
+      - key: NODE_ENV
+        value: production
+         
+      # CORS (for frontend access)
+      - key: CORS_ORIGINS
+        value: https://owami-network.onrender.com,https://localhost:8081
+      - key: CORS_ALLOW_CREDENTIALS
+        value: true
+         
+      # Rate Limiting
+      - key: RATE_LIMIT_REQUESTS
+        value: 100
+      - key: RATE_LIMIT_WINDOW
+        value: 60
+         
+      # JWT Secret (generate your own)
+      - key: JWT_SECRET
+        generateValue: true
+         
+      # Faucet Configuration
+      - key: FAUCET_AMOUNT
+        value: 1000
+      - key: FAUCET_RATE_LIMIT
+        value: 86400  # 24 hours in seconds
+
+    # Scaling
+    numInstances: 1
