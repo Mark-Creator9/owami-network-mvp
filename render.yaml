@@ -1,13 +1,13 @@
 services:
-  # Backend Service (Docker deployment)
+  # Backend Service (Docker deployment - No RocksDB version)
   - type: web
-    name: owami-network
+    name: owami-network-no-rocksdb
     env: docker
     plan: free
     region: oregon
     
-    # Docker configuration
-    dockerfilePath: ./Dockerfile
+    # Docker configuration - use the no-rocksdb Dockerfile
+    dockerfilePath: ./Dockerfile-no-rocksdb
     
     # Health check
     healthCheckPath: /health

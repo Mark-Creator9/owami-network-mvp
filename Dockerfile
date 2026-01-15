@@ -1,23 +1,23 @@
-# Owami Network Testnet MVP - Fixed for Render deployment
+# Owami Network Testnet MVP - No RocksDB version for Render deployment
+# This avoids the libclang issue entirely by removing RocksDB dependency
 
 # ========= Build stage =========
 FROM rust:1.77-slim as builder
 
-# Install build dependencies INCLUDING libclang for bindgen
+# Install basic build dependencies (no libclang needed!)
 RUN apt-get update && apt-get install -y \
     build-essential \
     pkg-config \
     libssl-dev \
-    libclang-dev \
-    clang \
     ca-certificates \
     curl \
   && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Copy manifests
-COPY Cargo.toml Cargo.lock ./
+# Copy manifests - use the no-rocksdb version
+COPY Cargo-no-rocksdb.toml Cargo.toml
+COPY Cargo.lock ./
 
 # Copy source
 COPY src ./src
@@ -37,7 +37,7 @@ RUN apt-get update && apt-get install -y \
     curl \
   && rm -rf /var/lib/apt/lists/*
 
-# Create data directory for RocksDB
+# Create data directory
 RUN mkdir -p /app/data /app/data/rocksdb
 
 WORKDIR /app
