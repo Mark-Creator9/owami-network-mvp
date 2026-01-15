@@ -48,9 +48,9 @@ uuid = { version = "1.0", features = ["v4"] }
 lazy_static = "1.4"
 toml = "0.8"
 
-# Removed WASM Runtime for Render deployment
-# wasmparser = "0.201"
-# base64 = "0.22"
+# WASM Runtime dependencies (kept for wasm_runtime.rs)
+wasmtime = "12.0"
+base64 = "0.22"
 
 [dev-dependencies]
 tokio-test = "0.4"
