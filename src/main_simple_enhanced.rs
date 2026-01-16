@@ -2,14 +2,14 @@
 // This avoids the libclang issue while maintaining functionality
 
 use axum::{
+    extract::Path,
     extract::State,
     http::StatusCode,
-    response::IntoResponse,
+    response::{Html, IntoResponse},
     routing::{get, post},
     Json, Router,
 };
 use chrono::{SecondsFormat, Utc};
-use hex;
 use owami_network::{
     block::Block, blockchain::Blockchain, config::AppConfig, crypto_utils::generate_keypair,
     wallet::Wallet,
@@ -21,6 +21,7 @@ use std::{
     sync::{Arc, Mutex},
 };
 use tower_http::cors::{Any, CorsLayer};
+use tower_http::services::ServeDir;
 
 // Import our pure Rust database instead of RocksDB
 mod db_pure_rust;
@@ -235,6 +236,95 @@ async fn create_wallet() -> Json<serde_json::Value> {
     }))
 }
 
+async fn get_transactions(State(state): State<SimpleState>) -> Json<serde_json::Value> {
+    let blockchain = state.blockchain.lock().unwrap();
+    let mut transactions: Vec<serde_json::Value> = Vec::new();
+
+    for block in &blockchain.blocks {
+        for tx in &block.transactions {
+            transactions.push(serde_json::json!({
+                "hash": tx.hash(),
+                "from": tx.from,
+                "to": tx.to,
+                "amount": tx.amount,
+                "data": tx.data,
+                "timestamp": block.header.timestamp,
+                "block_height": block.header.height
+            }));
+        }
+    }
+
+    Json(serde_json::json!({
+        "success": true,
+        "transactions": transactions,
+        "total": transactions.len()
+    }))
+}
+
+async fn get_balance(
+    State(state): State<SimpleState>,
+    Path(address): Path<String>,
+) -> Json<serde_json::Value> {
+    let blockchain = state.blockchain.lock().unwrap();
+    let balance = blockchain.get_balance(&address);
+
+    Json(serde_json::json!({
+        "success": true,
+        "address": address,
+        "balance": balance
+    }))
+}
+
+async fn mint_tokens(
+    State(state): State<SimpleState>,
+    Json(request): Json<serde_json::Value>,
+) -> Json<serde_json::Value> {
+    let address = request["address"].as_str().unwrap_or("");
+    let amount = request["amount"].as_u64().unwrap_or(0);
+
+    if address.is_empty() || amount == 0 {
+        return Json(serde_json::json!({
+            "success": false,
+            "error": "Invalid address or amount"
+        }));
+    }
+
+    let mut blockchain = state.blockchain.lock().unwrap();
+    match blockchain.mint(address.to_string(), amount) {
+        Ok(_) => Json(serde_json::json!({
+            "success": true,
+            "message": "Tokens minted successfully",
+            "address": address,
+            "amount": amount
+        })),
+        Err(e) => Json(serde_json::json!({
+            "success": false,
+            "error": e
+        })),
+    }
+}
+
+async fn serve_static(Path(file_path): Path<String>) -> impl IntoResponse {
+    let path = std::path::Path::new("landing").join(&file_path);
+    match std::fs::read_to_string(&path) {
+        Ok(content) => {
+            let mime_type = if file_path.ends_with(".css") {
+                "text/css"
+            } else if file_path.ends_with(".js") {
+                "application/javascript"
+            } else {
+                "text/plain"
+            };
+            (
+                [(axum::http::header::CONTENT_TYPE, mime_type)],
+                Html(content),
+            )
+                .into_response()
+        }
+        Err(_) => (StatusCode::NOT_FOUND, "File not found").into_response(),
+    }
+}
+
 async fn handle_404() -> impl IntoResponse {
     (
         StatusCode::NOT_FOUND,
@@ -244,6 +334,59 @@ async fn handle_404() -> impl IntoResponse {
         }),
     )
 }
+
+async fn root() -> impl IntoResponse {
+    let html_content = std::fs::read_to_string("landing/index.html").unwrap_or_else(|_| {
+        r#"<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Owami Network - UI Not Found</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            margin: 0;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+        }
+        .container {
+            text-align: center;
+            padding: 40px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 20px;
+            box-shadow: 0 8px 32px rgba(0, 0, 0, 0.1);
+            backdrop-filter: blur(10px);
+        }
+        h1 { margin-bottom: 20px; }
+        .api-link {
+            color: #fff;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 10px 20px;
+            border-radius: 5px;
+            text-decoration: none;
+            display: inline-block;
+            margin-top: 20px;
+        }
+        .api-link:hover { background: rgba(255, 255, 255, 0.3); }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Owami Network MVP</h1>
+        <p>The UI files were not found. Please check the landing directory.</p>
+        <p>API is available at <a href="/api/blockchain/info" class="api-link">/api/blockchain/info</a></p>
+    </div>
+</body>
+</html>"#.to_string()
+    });
+    Html(html_content)
+}
+
 async fn deploy_dapp(
     State(state): State<SimpleState>,
     Json(request): Json<serde_json::Value>,
@@ -415,6 +558,7 @@ fn main() {
 
     // Build router
     let app = Router::new()
+        .route("/", get(root))
         .route("/health", get(health_check))
         .route("/api/blockchain/info", get(blockchain_info))
         .route("/api/blockchain/mine", post(mine_block))
@@ -422,9 +566,14 @@ fn main() {
         .route("/api/blockchain/blocks/:block_index", get(get_block))
         .route("/api/blockchain/blocks", get(get_blocks))
         .route("/api/wallet/create", get(create_wallet))
+        .route("/api/wallet/balance/:address", get(get_balance))
+        .route("/api/wallet/mint", post(mint_tokens))
+        .route("/api/transactions", get(get_transactions))
         .route("/api/dapps/deploy", post(deploy_dapp))
         .route("/api/dapps/interact", post(interact_dapp))
         .route("/api/dapps", get(get_dapps))
+        .nest_service("/css", ServeDir::new("landing/css"))
+        .nest_service("/js", ServeDir::new("landing/js"))
         .layer(cors)
         .with_state(state)
         .fallback(handle_404);

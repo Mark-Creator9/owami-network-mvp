@@ -1,35 +1,37 @@
 // Modern Owami Network Frontend Application
 class OwamiApp {
   constructor() {
-    // API Configuration - Updated to match your backend port
-    // Assume app is served from same host/port as backend
-    this.API_BASE = '/api/v1';
+    // API Configuration - Updated to match your backend
+    this.API_BASE = '/api';
     this.ENDPOINTS = {
       // Health and status
       health: '/health',
-      status: '/blockchain/status',
-      
-      // Authentication
+      status: '/blockchain/info',
+
+      // Authentication (not implemented in MVP)
       register: '/auth/register',
       login: '/auth/login',
       profile: '/auth/profile',
-      
+
       // Blockchain
-      blockchainInfo: '/blockchain/status',
+      blockchainInfo: '/blockchain/info',
       blocks: '/blockchain/blocks',
       mineBlock: '/blockchain/mine',
-      
-      // Token operations
+
+      // Token operations (simplified for MVP)
       tokenInfo: '/tokens',
       balance: '/tokens/balance',
-      transfer: '/tokens/transfer',
+      transfer: '/blockchain/transactions',
       mint: '/tokens/mint',
-      transactions: '/tokens/transactions',
-      
+      transactions: '/blockchain/transactions',
+
+      // Wallet
+      createWallet: '/wallet/create',
+
       // DApp management
       dapps: '/dapps',
       deploy: '/dapps/deploy',
-      call: '/dapps/call'
+      interact: '/dapps/interact'
     };
 
     // Application state
@@ -341,9 +343,9 @@ class OwamiApp {
     }
 
     this.showLoading('Requesting test tokens...');
-    
+
     try {
-      // Use JSON mint endpoint: POST /api/token/mint with {to, amount}
+      // Use JSON mint endpoint: POST /api/wallet/mint with {address, amount}
       const response = await fetch(`${this.API_BASE}${this.ENDPOINTS.mint}`, {
         method: 'POST',
         headers: {
@@ -351,19 +353,19 @@ class OwamiApp {
         },
         body: JSON.stringify({
           amount: 100,
-          to: this.state.wallet.address
+          address: this.state.wallet.address
         })
       });
 
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || 'Token request failed');
+        throw new Error(errorData.error || 'Token request failed');
       }
 
       // Update balance after successful mint
       await this.loadBalance();
       this.showToast('Test tokens received!', 'success');
-      
+
     } catch (error) {
       console.error('❌ Token request failed:', error);
       this.showToast(`Failed to get tokens: ${error.message}`, 'error');
@@ -700,8 +702,9 @@ class OwamiApp {
     try {
       const response = await fetch(`${this.API_BASE}${this.ENDPOINTS.transactions}`);
       if (!response.ok) throw new Error('Failed to load transactions');
-      
-      const transactions = await response.json();
+
+      const data = await response.json();
+      const transactions = data.transactions || [];
       this.state.transactions = transactions;
       
       const transactionsList = document.getElementById('transactions-list');
