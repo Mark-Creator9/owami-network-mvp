@@ -138,7 +138,7 @@ async fn blockchain_info(State(state): State<SimpleState>) -> Json<BlockchainInf
 
 async fn mine_block(
     State(state): State<SimpleState>,
-    Json(request): Json<MineBlockRequest>,
+    Json(_request): Json<MineBlockRequest>,
 ) -> Json<MineBlockResponse> {
     let mut blockchain = state.blockchain.lock().unwrap();
     let signing_key = owami_network::crypto_utils::default_signing_key();
@@ -172,18 +172,21 @@ async fn add_transaction(
 
     let signing_key = owami_network::crypto_utils::default_signing_key();
     match tx.sign(&signing_key) {
-        Ok(_) => match blockchain.add_transaction(tx) {
-            Ok(_) => Json(AddTransactionResponse {
-                success: true,
-                transaction_hash: Some(tx.hash()),
-                message: "Transaction added successfully".to_string(),
-            }),
-            Err(e) => Json(AddTransactionResponse {
-                success: false,
-                transaction_hash: None,
-                message: format!("Failed to add transaction: {}", e),
-            }),
-        },
+        Ok(_) => {
+            let tx_hash = tx.hash();
+            match blockchain.add_transaction(tx) {
+                Ok(_) => Json(AddTransactionResponse {
+                    success: true,
+                    transaction_hash: Some(tx_hash),
+                    message: "Transaction added successfully".to_string(),
+                }),
+                Err(e) => Json(AddTransactionResponse {
+                    success: false,
+                    transaction_hash: None,
+                    message: format!("Failed to add transaction: {}", e),
+                }),
+            }
+        }
         Err(e) => Json(AddTransactionResponse {
             success: false,
             transaction_hash: None,
@@ -241,12 +244,10 @@ async fn handle_404() -> impl IntoResponse {
         }),
     )
 }
-
-#[tokio::main]
 async fn deploy_dapp(
     State(state): State<SimpleState>,
     Json(request): Json<serde_json::Value>,
-) -> Json<serde_json::Value> {
+) -> impl IntoResponse {
     let name = request["name"].as_str().unwrap_or("");
     let description = request["description"].as_str().unwrap_or("");
     let category = request["category"].as_str().unwrap_or("");
@@ -260,7 +261,7 @@ async fn deploy_dapp(
         description: description.to_string(),
         category: category.to_string(),
         code: code.to_string(),
-        created_at: chrono::Utc::now().timestamp(),
+        created_at: chrono::Utc::now().timestamp() as u64,
         state: serde_json::json!({
             "count": 0
         }),
@@ -284,7 +285,8 @@ async fn interact_dapp(
     let function_name = request["function_name"].as_str().unwrap_or("");
     let args = request["args"]
         .as_object()
-        .unwrap_or(&serde_json::json!({}));
+        .cloned()
+        .unwrap_or_else(|| serde_json::Map::new());
 
     let mut dapps = state.dapps.lock().unwrap();
     let dapp = dapps.get(dapp_id);
@@ -292,7 +294,7 @@ async fn interact_dapp(
     match dapp {
         Some(dapp) => {
             let code = dapp.code.clone();
-            let result = match function_name.as_str() {
+            let result = match function_name {
                 "increment" => {
                     if let serde_json::Value::Object(state) = &dapp.state {
                         let count = state.get("count").and_then(|v| v.as_i64()).unwrap_or(0);
@@ -340,7 +342,7 @@ async fn get_dapps(State(state): State<SimpleState>) -> Json<serde_json::Value> 
     }))
 }
 
-async fn main() {
+fn main() {
     if env::var("CONFIG_PATH").is_err() {
         env::set_var("CONFIG_PATH", "config/testnet.toml");
     }
@@ -387,7 +389,9 @@ async fn main() {
     };
 
     // Initialize blockchain
-    let blockchain = Arc::new(owami_network::blockchain::Blockchain::new(&config));
+    let blockchain = Arc::new(Mutex::new(owami_network::blockchain::Blockchain::new(
+        &config,
+    )));
 
     // Initialize wallets
     let wallets = Arc::new(HashMap::new());
@@ -437,9 +441,16 @@ async fn main() {
         server_host, server_port
     );
 
-    let listener = tokio::net::TcpListener::bind(format!("{}:{}", server_host, server_port))
-        .await
-        .unwrap();
+    tokio::runtime::Builder::new_multi_thread()
+        .enable_all()
+        .build()
+        .unwrap()
+        .block_on(async {
+            let listener =
+                tokio::net::TcpListener::bind(format!("{}:{}", server_host, server_port))
+                    .await
+                    .unwrap();
 
-    axum::serve(listener, app).await.unwrap();
+            axum::serve(listener, app).await.unwrap();
+        });
 }
