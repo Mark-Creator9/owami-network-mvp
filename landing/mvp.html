@@ -1449,6 +1449,201 @@
             }
         }
 
+        // DApp Functions
+        async function deployDApp() {
+            if (!currentWallet) {
+                updateStatus('❌ Wallet Required', 'Create wallet first', 'error');
+                return;
+            }
+            
+            const name = document.getElementById('dapp-name').value;
+            const description = document.getElementById('dapp-description').value;
+            const category = document.getElementById('dapp-category').value;
+            
+            if (!name || !description || !category) {
+                updateStatus('❌ Missing Fields', 'Fill in all DApp fields', 'error');
+                return;
+            }
+            
+            // Simple contract code (Counter DApp)
+            const contractCode = {
+                name: "Simple Counter",
+                state: { count: 0 },
+                functions: {
+                    increment: "state.count += 1",
+                    decrement: "state.count -= 1",
+                    getCount: "return state.count"
+                }
+            };
+            
+            try {
+                updateStatus('Deploying DApp...', `Deploying ${name} to blockchain`, 'info');
+                
+                const result = await apiCall('/dapps/deploy', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        name: name,
+                        description: description,
+                        category: category,
+                        code: JSON.stringify(contractCode),
+                        owner_address: currentWallet.address
+                    })
+                });
+                
+                if (result.success) {
+                    updateStatus('✅ DApp Deployed', `${name} deployed successfully`, 'success');
+                    log(`DApp deployed: ${name}`, 'rocket', '#10b981');
+                    await loadDApps();
+                    document.getElementById('dapp-name').value = '';
+                    document.getElementById('dapp-description').value = '';
+                    document.getElementById('dapp-category').value = '';
+                } else {
+                    updateStatus('❌ Deployment Failed', result.message || 'Unknown error', 'error');
+                    log('DApp deployment failed: ' + (result.message || 'Unknown error'), 'exclamation-triangle', '#ef4444');
+                }
+            } catch (error) {
+                updateStatus('❌ Deployment Failed', error.message, 'error');
+                log('DApp deployment error: ' + error.message, 'exclamation-triangle', '#ef4444');
+            }
+        }
+
+        let currentDAppId = null;
+
+        async function loadDApps() {
+            try {
+                updateStatus('Loading DApps...', 'Fetching deployed DApps', 'info');
+                
+                const response = await apiCall('/dapps');
+                const dapps = response.data || response || [];
+                
+                const dappsList = document.getElementById('dapps-list');
+                
+                if (dapps.length === 0) {
+                    dappsList.innerHTML = `
+                        <div style="text-align: center; opacity: 0.5; padding: 60px 20px;">
+                            <i class="fas fa-code" style="font-size: 3rem; margin-bottom: 15px; color: var(--accent);"></i>
+                            <p>No DApps deployed yet</p>
+                            <small>Deploy your first DApp to get started</small>
+                        </div>
+                    `;
+                } else {
+                    dappsList.innerHTML = dapps.map(dapp => `
+                        <div class="dapp-card fade-in">
+                            <div class="dapp-header">
+                                <div class="dapp-name">${dapp.name}</div>
+                                <div class="dapp-category">${dapp.category || 'utility'}</div>
+                            </div>
+                            <div class="dapp-description">${dapp.description || 'No description'}</div>
+                            <div class="dapp-address">Contract: ${dapp.id}</div>
+                            <div style="margin-top: 15px;">
+                                <button class="btn btn-success" style="font-size: 0.9rem; padding: 10px 20px;" onclick="selectDApp('${dapp.id}')">
+                                    <i class="fas fa-play"></i> Interact
+                                </button>
+                            </div>
+                        </div>
+                    `).join('');
+                }
+                
+                log(`Loaded ${dapps.length} DApps`, 'code', '#06b6d4');
+            } catch (error) {
+                log('Failed to load DApps: ' + error.message, 'exclamation-triangle', '#ef4444');
+            }
+        }
+
+        async function loadDAppState(dappId) {
+            const dappsList = document.getElementById('dapps-list');
+            const dapps = await apiCall('/dapps');
+            const dapp = dapps.data?.find(d => d.id === dappId) || dapps.find(d => d.id === dappId);
+            
+            if (dapp) {
+                currentDAppId = dappId;
+                document.getElementById('dapp-select').value = dappId;
+                
+                // Update function options based on contract code
+                const code = JSON.parse(dapp.code);
+                const functionSelect = document.getElementById('dapp-function');
+                functionSelect.innerHTML = '<option value="">Select Function</option>';
+                
+                if (code.functions) {
+                    Object.keys(code.functions).forEach(func => {
+                        functionSelect.innerHTML += `<option value="${func}">${func}</option>`;
+                    });
+                }
+                
+                // Set default args
+                document.getElementById('dapp-args').value = JSON.stringify({
+                    name: code.functions?.getCount ? "World" : "World"
+                });
+                
+                updateStatus('DApp Loaded', `Loaded: ${dapp.name}`, 'success');
+            }
+        }
+
+        async function interactWithDApp() {
+            if (!currentWallet) {
+                updateStatus('❌ Wallet Required', 'Create wallet first', 'error');
+                return;
+            }
+            
+            const dappId = currentDAppId;
+            const functionName = document.getElementById('dapp-function').value;
+            const args = document.getElementById('dapp-args').value;
+            
+            if (!dappId || !functionName) {
+                updateStatus('❌ Missing Fields', 'Select DApp and function', 'error');
+                return;
+            }
+            
+            try {
+                updateStatus('Executing DApp...', `Executing ${functionName}...`, 'info');
+                
+                const result = await apiCall('/dapps/interact', {
+                    method: 'POST',
+                    body: JSON.stringify({
+                        dapp_id: dappId,
+                        function_name: functionName,
+                        args: JSON.parse(args),
+                        from_address: currentWallet.address
+                    })
+                });
+                
+                const resultDiv = document.getElementById('dapp-result');
+                const resultText = document.getElementById('dapp-result-text');
+                resultDiv.style.display = 'block';
+                
+                if (result.success) {
+                    updateStatus('✅ DApp Executed', 'Function executed successfully', 'success');
+                    log(`DApp executed: ${functionName}`, 'bolt', '#f59e0b');
+                    
+                    let resultValue = result.result;
+                    if (typeof resultValue === 'object') {
+                        resultText.textContent = JSON.stringify(resultValue, null, 2);
+                    } else {
+                        resultText.textContent = JSON.stringify(resultValue);
+                    }
+                    
+                    // Update DApp state if applicable
+                    if (functionName === 'increment' && currentDAppId) {
+                        const dappsList = document.getElementById('dapps-list');
+                        // Update state display (in a real app, this would update the DApp state)
+                        log(`DApp state updated`, 'sync-alt', '#06b6d4');
+                    }
+                } else {
+                    updateStatus('❌ Execution Failed', result.message || 'Unknown error', 'error');
+                    log(`DApp execution failed: ${result.message || 'Unknown error'}`, 'exclamation-triangle', '#ef4444');
+                }
+            } catch (error) {
+                updateStatus('❌ Execution Error', error.message, 'error');
+                log('DApp execution error: ' + error.message, 'exclamation-triangle', '#ef4444');
+            }
+        }
+
+        async function selectDApp(dappId) {
+            await loadDAppState(dappId);
+        }
+
+        function updateStatus(title, desc, type = 'info') {
+
         function log(message, icon = 'info-circle', color = '#6366f1') {
             const activityLog = document.getElementById('activity-log');
             const time = new Date().toLocaleTimeString();
