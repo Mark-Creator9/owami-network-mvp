@@ -20,10 +20,10 @@ class OwamiApp {
 
       // Token operations (simplified for MVP)
       tokenInfo: '/tokens',
-      balance: '/tokens/balance',
+      balance: '/wallet/balance',
       transfer: '/blockchain/transactions',
-      mint: '/tokens/mint',
-      transactions: '/blockchain/transactions',
+      mint: '/wallet/mint',
+      transactions: '/transactions',
 
       // Wallet
       createWallet: '/wallet/create',

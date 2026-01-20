@@ -560,6 +560,7 @@ fn main() {
     let app = Router::new()
         .route("/", get(root))
         .route("/health", get(health_check))
+        .route("/api/health", get(health_check))
         .route("/api/blockchain/info", get(blockchain_info))
         .route("/api/blockchain/mine", post(mine_block))
         .route("/api/blockchain/transactions", post(add_transaction))
